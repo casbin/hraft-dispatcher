@@ -1,10 +1,8 @@
-# casbin-hashicorp-raft 
+# casbin-hraft-dispatcher 
+
+A dispatcher based on Hashicorp's Raft for Casbin.
 
 **In the development**
-
-## TODO
-
-- Forward data to leader from follower
 
 ## Contribution
 

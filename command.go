@@ -1,4 +1,4 @@
-package casbin_hashicorp_raft
+package casbin_hraft_dispatcher
 
 type Operation string
 
