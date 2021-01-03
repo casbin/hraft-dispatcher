@@ -6,6 +6,7 @@ A dispatcher based on Hashicorp's Raft for Casbin.
 
 - Add unit tests
 - Add integration tests
+- TLS Transport
 
 ## Contribution
 
