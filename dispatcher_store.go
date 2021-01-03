@@ -1,11 +1,8 @@
 package casbin_hraft_dispatcher
 
 import (
-	"bytes"
-	"encoding/json"
-	"golang.org/x/net/http2"
+	"github.com/hashicorp/go-multierror"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -14,21 +11,24 @@ import (
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 
 	"go.uber.org/zap"
-
-	"github.com/pkg/errors"
 )
 
 //go:generate mockgen -destination mock/mock_dispatcher_store.go -package mock -source dispatcher_store.go
 
 type DispatcherStore interface {
-	Join(serverID string, httpAddress string, raftAddress string) error
-	Leader() (bool, string)
+	Start() error
+	Stop() error
+	AddNode(serverID string, address string) error
+	RemoveNode(serverID string) error
 	Apply(buf []byte) error
+	Leader() (bool, string)
 }
+
+var _ DispatcherStore = &DefaultDispatcherStore{}
 
 // DefaultDispatcherStore is a casbin enforcer backend by raft
 type DefaultDispatcherStore struct {
-	*DispatcherOption
+	*DispatcherConfig
 
 	logger *zap.Logger
 
@@ -42,52 +42,12 @@ type DefaultDispatcherStore struct {
 	stableStore   raft.StableStore
 	fms           raft.FSM
 	boltStore     *raftboltdb.BoltStore
-	client        http.Client
 }
 
 // NewDispatcher return a instance of dispatcher.
-func NewDispatcher(opt *DispatcherOption) (*DefaultDispatcherStore, error) {
-	d := &DefaultDispatcherStore{DispatcherOption: opt}
+func NewDispatcherStore(config *DispatcherConfig) (*DefaultDispatcherStore, error) {
+	d := &DefaultDispatcherStore{DispatcherConfig: config}
 	return d, nil
-}
-
-// initialize initializes and checks the server configuration.
-func (d *DefaultDispatcherStore) initialize() error {
-	if d.Enforcer == nil {
-		return errors.New("Enforcer is required")
-	}
-
-	if d.TLSConfig == nil {
-		return errors.New("TLSConfig is required")
-	}
-
-	if d.RaftAddress == "" {
-		d.RaftAddress = DefaultRaftAddress
-	}
-
-	if d.RaftConfig == nil {
-		d.RaftConfig = raft.DefaultConfig()
-	}
-
-	if d.DataDir == "" {
-		d.DataDir = DefaultDataDir
-	}
-
-	if d.ServerID == "" {
-		d.ServerID = d.RaftAddress
-	}
-
-	if d.logger == nil {
-		d.logger = zap.NewExample()
-	}
-
-	d.client = http.Client{
-		Transport: &http2.Transport{
-			AllowHTTP:       false,
-			TLSClientConfig: d.TLSConfig,
-		},
-	}
-	return nil
 }
 
 func (d *DefaultDispatcherStore) ensureLeader() bool {
@@ -96,12 +56,6 @@ func (d *DefaultDispatcherStore) ensureLeader() bool {
 
 // Start performs initialization and runs server
 func (d *DefaultDispatcherStore) Start() error {
-	err := d.initialize()
-	if err != nil {
-		d.logger.Error("cannot to initialize the server", zap.Error(err))
-		return err
-	}
-
 	// Setup Raft configuration.
 	config := raft.DefaultConfig()
 	config.LocalID = raft.ServerID(d.ServerID)
@@ -173,103 +127,34 @@ func (d *DefaultDispatcherStore) Start() error {
 	return nil
 }
 
-// Stop close the raft node and http server
+// Stop is used to close the raft node, which always returns nil.
 func (d *DefaultDispatcherStore) Stop() error {
+	var result error
 	s := d.raft.Shutdown()
-
 	if s.Error() != nil {
 		d.logger.Error("failed to stop the raft server", zap.Error(s.Error()))
-		return s.Error()
+		result = multierror.Append(result, s.Error())
 	}
 
 	err := d.boltStore.Close()
 	if err != nil {
 		d.logger.Error("failed to close bolt database", zap.Error(s.Error()))
-		return err
+		result = multierror.Append(result, s.Error())
 	}
 
-	return nil
+	return result
 }
 
-// AddMember adds a new node to Cluster.
-func (d *DefaultDispatcherStore) AddMember(id string, address string) error {
-	i := d.raft.AddVoter(raft.ServerID(id), raft.ServerAddress(address), 0, 0)
+// AddNode adds a new node to Cluster.
+func (d *DefaultDispatcherStore) AddNode(serverID string, address string) error {
+	i := d.raft.AddVoter(raft.ServerID(serverID), raft.ServerAddress(address), 0, RaftTimeout)
 	return i.Error()
 }
 
-// removeMember removes a new node from Cluster.
-func (d *DefaultDispatcherStore) RemoveMember(id string, address string) error {
-	i := d.raft.RemoveServer(raft.ServerID(id), 0, 0)
+// RemoveNode removes a new node from Cluster.
+func (d *DefaultDispatcherStore) RemoveNode(serverID string) error {
+	i := d.raft.RemoveServer(raft.ServerID(serverID), 0, RaftTimeout)
 	return i.Error()
-}
-
-func (d *DefaultDispatcherStore) requestBackend(command Command) error {
-	b, _ := json.Marshal(command)
-	resp, err := d.client.Post(d.HttpAddress, "application/json", bytes.NewBuffer(b))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusOK {
-		return nil
-	} else {
-		d.logger.Error("dispatcher backend is not available", zap.String("status", resp.Status))
-		return errors.New("server is not available")
-	}
-}
-
-// AddPolicies adds policies to enforcer
-func (d *DefaultDispatcherStore) AddPolicies(sec string, ptype string, rules [][]string) error {
-	command := Command{
-		Operation: addOperation,
-		Sec:       sec,
-		Ptype:     ptype,
-		Rules:     rules,
-	}
-	return d.requestBackend(command)
-}
-
-// RemovePolicies removes policies from enforcer
-func (d *DefaultDispatcherStore) RemovePolicies(sec string, ptype string, rules [][]string) error {
-	command := Command{
-		Operation: removeOperation,
-		Sec:       sec,
-		Ptype:     ptype,
-		Rules:     rules,
-	}
-	return d.requestBackend(command)
-}
-
-// RemoveFilteredPolicy removes a role inheritance rule from the current named policy, field filters can be specified.
-func (d *DefaultDispatcherStore) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
-	command := Command{
-		Operation:   removeFilteredOperation,
-		Sec:         sec,
-		Ptype:       ptype,
-		FieldIndex:  fieldIndex,
-		FieldValues: fieldValues,
-	}
-	return d.requestBackend(command)
-}
-
-// ClearPolicy clears all policy.
-func (d *DefaultDispatcherStore) ClearPolicy() error {
-	command := Command{
-		Operation: clearOperation,
-	}
-	return d.requestBackend(command)
-}
-
-// UpdatePolicy updates policy rule from all instance.
-func (d *DefaultDispatcherStore) UpdatePolicy(sec string, ptype string, oldRule, newRule []string) error {
-	command := Command{
-		Operation: updateOperation,
-		Sec:       sec,
-		Ptype:     ptype,
-		OldRule:   oldRule,
-		NewRule:   newRule,
-	}
-	return d.requestBackend(command)
 }
 
 func (d *DefaultDispatcherStore) Apply(cmd []byte) error {

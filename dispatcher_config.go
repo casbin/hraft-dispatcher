@@ -6,7 +6,8 @@ import (
 	"github.com/hashicorp/raft"
 )
 
-type DispatcherOption struct {
+// DispatcherConfig holds dispatcher config.
+type DispatcherConfig struct {
 	// Enforcer is a enforcer of casbin.
 	Enforcer casbin.IDistributedEnforcer
 	// TLSConfig is used to configure a TLS client or server.

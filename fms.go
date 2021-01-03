@@ -12,11 +12,11 @@ import (
 
 // FSM is state storage.
 type FSM struct {
-	commands []Command
-	enforcer casbin.IDistributedEnforcer
+	commands     []Command
+	enforcer     casbin.IDistributedEnforcer
 	ensureLeader func() bool
-	mutex    *sync.RWMutex
-	logger   *zap.Logger
+	mutex        *sync.RWMutex
+	logger       *zap.Logger
 }
 
 func NewFSM(enforcer casbin.IDistributedEnforcer, logger *zap.Logger) (*FSM, error) {

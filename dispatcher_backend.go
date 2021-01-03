@@ -5,10 +5,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
+	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 
 	"go.uber.org/zap"
@@ -20,7 +21,11 @@ type DispatcherBackend struct {
 	store  DispatcherStore
 }
 
-func NewDispatcherBackend(address string, store DispatcherStore) *DispatcherBackend {
+func NewDispatcherBackend(address string, tlsConfig *tls.Config, store DispatcherStore) (*DispatcherBackend, error) {
+	if tlsConfig == nil {
+		return nil, errors.New("tlsConfig cannot be nil")
+	}
+
 	d := &DispatcherBackend{
 		logger: zap.NewExample(),
 		store:  store,
@@ -29,16 +34,22 @@ func NewDispatcherBackend(address string, store DispatcherStore) *DispatcherBack
 	mux := http.NewServeMux()
 	mux.HandleFunc("/commands", d.commandsHandler)
 	mux.HandleFunc("/nodes", d.commandsHandler)
-	srv := http.Server{Addr: address, Handler: mux}
-	_ = http2.ConfigureServer(&srv, nil)
-	return d
+
+	srv := &http.Server{
+		Addr:              address,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		IdleTimeout:       5 * time.Minute,
+		TLSConfig:         tlsConfig,
+	}
+	d.srv = srv
+	_ = http2.ConfigureServer(srv, nil)
+
+	return d, nil
 }
 
-func (d *DispatcherBackend) Start(config *tls.Config) error {
-	if config == nil {
-		return errors.New("tls config is required")
-	}
-	d.srv.TLSConfig = config
+func (d *DispatcherBackend) Start() error {
 	return d.srv.ListenAndServeTLS("", "")
 }
 
