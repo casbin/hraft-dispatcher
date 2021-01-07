@@ -25,19 +25,18 @@ func NewDispatcherBackend(address string, tlsConfig *tls.Config, store Dispatche
 	if tlsConfig == nil {
 		return nil, errors.New("tlsConfig cannot be nil")
 	}
+	if address == "" {
+		address = DefaultHttpAddress
+	}
 
 	d := &DispatcherBackend{
 		logger: zap.NewExample(),
 		store:  store,
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/commands", d.commandsHandler)
-	mux.HandleFunc("/nodes", d.commandsHandler)
-
 	srv := &http.Server{
 		Addr:              address,
-		Handler:           mux,
+		Handler:           SetupRouter(store),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       5 * time.Minute,
@@ -57,16 +56,28 @@ func (d *DispatcherBackend) Stop(ctx context.Context) error {
 	return d.srv.Shutdown(ctx)
 }
 
-func (d *DispatcherBackend) redirectToLeaderServer(w http.ResponseWriter, r *http.Request, host string) {
+func redirectToLeaderServer(w http.ResponseWriter, r *http.Request, host string, logger *zap.Logger) {
 	u := r.URL
 	redirectURL := fmt.Sprintf("%s:%s%s", u.Scheme, host, u.Path)
-	d.logger.Info(fmt.Sprintf("redirect the request from %s to %s", r.RequestURI, redirectURL), zap.String("leaderAddr", host))
+	logger.Info(fmt.Sprintf("redirect the request from %s to %s", r.RequestURI, redirectURL), zap.String("leaderAddr", host))
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
-func (d *DispatcherBackend) commandsHandler(w http.ResponseWriter, r *http.Request) {
+type CommandHandler struct {
+	store  DispatcherStore
+	logger *zap.Logger
+}
+
+func NewCommandHandler(store DispatcherStore) *CommandHandler {
+	return &CommandHandler{
+		store:  store,
+		logger: zap.NewExample(),
+	}
+}
+
+func (c *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		d.logger.Error("not allowed http method")
+		c.logger.Error("not allowed http method")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
@@ -74,36 +85,55 @@ func (d *DispatcherBackend) commandsHandler(w http.ResponseWriter, r *http.Reque
 	var cmd Command
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		d.logger.Error("failed to read the request body", zap.Error(err))
+		c.logger.Error("failed to read the request body", zap.Error(err))
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
 	err = json.Unmarshal(body, &cmd)
 	if err != nil {
-		d.logger.Error("failed to decode the command", zap.Error(err), zap.ByteString("body", body))
+		c.logger.Error("failed to decode the command", zap.Error(err), zap.ByteString("body", body))
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
-	isLeader, leaderAddr := d.store.Leader()
+	isLeader, leaderAddr := c.store.Leader()
 	if isLeader {
-		err := d.store.Apply(body)
+		err := c.store.Apply(body)
 		if err != nil {
-			d.logger.Error("failed to apply the command", zap.Error(err), zap.Reflect("command", cmd))
+			c.logger.Error("failed to apply the command", zap.Error(err), zap.Reflect("command", cmd))
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
 	} else {
 		if leaderAddr == "" {
-			d.logger.Error("cannot get the leader address")
+			c.logger.Error("cannot get the leader address")
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
-		d.redirectToLeaderServer(w, r, leaderAddr)
+		redirectToLeaderServer(w, r, leaderAddr, c.logger)
 	}
 }
 
-func (d *DispatcherBackend) nodesHandler(w http.ResponseWriter, r *http.Request) {
+type NodesHandler struct {
+	store  DispatcherStore
+	logger *zap.Logger
+}
+
+func NewNodesHandler(store DispatcherStore) *NodesHandler {
+	return &NodesHandler{
+		store:  store,
+		logger: zap.NewExample(),
+	}
+}
+
+func (n *NodesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusServiceUnavailable)
+}
+
+func SetupRouter(store DispatcherStore) *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.Handle("/commands", NewCommandHandler(store))
+	mux.Handle("/nodes", NewNodesHandler(store))
+	return mux
 }

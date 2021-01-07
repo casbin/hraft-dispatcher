@@ -9,6 +9,7 @@ require (
 	github.com/hashicorp/raft v1.2.0
 	github.com/hashicorp/raft-boltdb v0.0.0-20171010151810-6e5ba93211ea
 	github.com/pkg/errors v0.8.1
+	github.com/stretchr/testify v1.6.1
 	go.etcd.io/bbolt v1.3.5 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
