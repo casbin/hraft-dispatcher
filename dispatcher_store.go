@@ -1,11 +1,12 @@
 package casbin_hraft_dispatcher
 
 import (
-	"github.com/hashicorp/go-multierror"
 	"net"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
@@ -50,6 +51,12 @@ func NewDispatcherStore(config *DispatcherConfig) (*DefaultDispatcherStore, erro
 	return d, nil
 }
 
+// NewDispatcher return a instance of dispatcher in memory.
+func NewInmemDispatcherStore(config *DispatcherConfig) (*DefaultDispatcherStore, error) {
+	d := &DefaultDispatcherStore{DispatcherConfig: config, inMemory: true}
+	return d, nil
+}
+
 func (d *DefaultDispatcherStore) ensureLeader() bool {
 	return d.raft.State() == raft.Leader
 }
@@ -62,32 +69,51 @@ func (d *DefaultDispatcherStore) Start() error {
 
 	// Setup Raft communication.
 	addr, err := net.ResolveTCPAddr("tcp", d.RaftAddress)
-	transport, err := NewTCPTransport(d.RaftAddress, addr, d.TLSConfig, 3, 10*time.Second, os.Stderr)
-	if err != nil {
-		d.logger.Error("failed to new tcp transport", zap.Error(err), zap.String("raftAddress", d.RaftAddress))
-		return err
+
+	var transport raft.Transport
+	if d.inMemory {
+		_, transport = raft.NewInmemTransport(raft.ServerAddress(d.RaftAddress))
+	} else {
+		transport, err = NewTCPTransport(d.RaftAddress, addr, d.TLSConfig, 3, 10*time.Second, os.Stderr)
+		if err != nil {
+			d.logger.Error("failed to new tcp transport", zap.Error(err), zap.String("raftAddress", d.RaftAddress))
+			return err
+		}
 	}
+
 	d.transport = transport
 
 	// Create the snapshot store. This allows the Raft to truncate the log.
-	snapshots, err := raft.NewFileSnapshotStore(d.DataDir, RetainSnapshotCount, os.Stderr)
-	if err != nil {
-		d.logger.Error("failed to new file snapshot store", zap.Error(err), zap.String("dataDir", d.DataDir))
-		return err
+	var snapshots raft.SnapshotStore
+	if d.inMemory {
+		snapshots, err = raft.NewFileSnapshotStore(d.DataDir, RetainSnapshotCount, os.Stderr)
+		if err != nil {
+			d.logger.Error("failed to new file snapshot store", zap.Error(err), zap.String("dataDir", d.DataDir))
+			return err
+		}
+	} else {
+		snapshots = raft.NewInmemSnapshotStore()
 	}
+
 	d.snapshotStore = snapshots
 
-	// Create the log store and stable store.
-	dbPath := filepath.Join(d.DataDir, FileDatabaseName)
-	boltDB, err := raftboltdb.NewBoltStore(dbPath)
-	if err != nil {
-		d.logger.Error("failed to new bolt store", zap.Error(err), zap.String("path", dbPath))
-		return err
-	}
+	if d.inMemory {
+		inMemStore := raft.NewInmemStore()
+		d.logStore = inMemStore
+		d.stableStore = inMemStore
+	} else {
+		// Create the log store and stable store.
+		dbPath := filepath.Join(d.DataDir, FileDatabaseName)
+		boltDB, err := raftboltdb.NewBoltStore(dbPath)
+		if err != nil {
+			d.logger.Error("failed to new bolt store", zap.Error(err), zap.String("path", dbPath))
+			return err
+		}
 
-	d.boltStore = boltDB
-	d.logStore = boltDB
-	d.stableStore = boltDB
+		d.boltStore = boltDB
+		d.logStore = boltDB
+		d.stableStore = boltDB
+	}
 
 	// Create fms
 	fsm, err := NewFSM(d.Enforcer, d.logger)
@@ -135,10 +161,12 @@ func (d *DefaultDispatcherStore) Stop() error {
 		result = multierror.Append(result, s.Error())
 	}
 
-	err := d.boltStore.Close()
-	if err != nil {
-		d.logger.Error("failed to close bolt database", zap.Error(s.Error()))
-		result = multierror.Append(result, s.Error())
+	if !d.inMemory {
+		err := d.boltStore.Close()
+		if err != nil {
+			d.logger.Error("failed to close bolt database", zap.Error(s.Error()))
+			result = multierror.Append(result, s.Error())
+		}
 	}
 
 	return result
