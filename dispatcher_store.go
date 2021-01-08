@@ -62,8 +62,7 @@ func (d *DefaultDispatcherStore) Start() error {
 
 	// Setup Raft communication.
 	addr, err := net.ResolveTCPAddr("tcp", d.RaftAddress)
-	// TODO using TLS
-	transport, err := raft.NewTCPTransport(d.RaftAddress, addr, 3, 10*time.Second, os.Stderr)
+	transport, err := NewTCPTransport(d.RaftAddress, addr, d.TLSConfig, 3, 10*time.Second, os.Stderr)
 	if err != nil {
 		d.logger.Error("failed to new tcp transport", zap.Error(err), zap.String("raftAddress", d.RaftAddress))
 		return err
