@@ -52,19 +52,19 @@ func (f *FSM) apply(cmd Command) error {
 
 	f.commands = append(f.commands, cmd)
 	switch cmd.Operation {
-	case addOperation:
+	case AddOperation:
 		_, err := f.enforcer.AddPolicySelf(f.ensureLeader, cmd.Sec, cmd.Ptype, cmd.Rules)
 		return err
-	case removeOperation:
+	case RemoveOperation:
 		_, err := f.enforcer.RemovePolicySelf(f.ensureLeader, cmd.Sec, cmd.Ptype, cmd.Rules)
 		return err
-	case removeFilteredOperation:
+	case RemoveFilteredOperation:
 		_, err := f.enforcer.RemoveFilteredPolicySelf(f.ensureLeader, cmd.Sec, cmd.Ptype, cmd.FieldIndex, cmd.FieldValues...)
 		return err
-	case clearOperation:
+	case ClearOperation:
 		err := f.enforcer.ClearPolicySelf(f.ensureLeader)
 		return err
-	case updateOperation:
+	case UpdateOperation:
 		_, err := f.enforcer.UpdatePolicySelf(f.ensureLeader, cmd.Sec, cmd.Ptype, cmd.OldRule, cmd.NewRule)
 		return err
 	default:

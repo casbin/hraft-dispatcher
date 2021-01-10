@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/golang/mock/gomock"
-	"github.com/nodece/casbin-hraft-dispatcher/mock"
+	"github.com/nodece/casbin-hraft-dispatcher/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +18,7 @@ func TestHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dispatcherStore := mock.NewMockDispatcherStore(ctrl)
+	dispatcherStore := mocks.NewMockDispatcherStore(ctrl)
 	dispatcherStore.EXPECT().Leader().Return(true, "127.0.0.1").AnyTimes()
 
 	// TODO: move to integration test
@@ -39,7 +39,7 @@ func TestHandler(t *testing.T) {
 
 	commandHandler := NewCommandHandler(dispatcherStore)
 
-	c := &Command{Operation: addOperation, Sec: "p", Ptype: "p", Rules: nil}
+	c := &Command{Operation: AddOperation, Sec: "p", Ptype: "p", Rules: nil}
 	b, err := json.Marshal(c)
 	assert.NoError(t, err)
 

@@ -119,7 +119,7 @@ func (h *HRaftDispatcher) requestBackend(command Command) error {
 // AddPolicies adds policies to enforcer.
 func (h *HRaftDispatcher) AddPolicies(sec string, ptype string, rules [][]string) error {
 	command := Command{
-		Operation: addOperation,
+		Operation: AddOperation,
 		Sec:       sec,
 		Ptype:     ptype,
 		Rules:     rules,
@@ -130,7 +130,7 @@ func (h *HRaftDispatcher) AddPolicies(sec string, ptype string, rules [][]string
 // RemovePolicies removes policies from enforcer.
 func (h *HRaftDispatcher) RemovePolicies(sec string, ptype string, rules [][]string) error {
 	command := Command{
-		Operation: removeOperation,
+		Operation: RemoveOperation,
 		Sec:       sec,
 		Ptype:     ptype,
 		Rules:     rules,
@@ -141,7 +141,7 @@ func (h *HRaftDispatcher) RemovePolicies(sec string, ptype string, rules [][]str
 // RemoveFilteredPolicy removes a role inheritance rule from the current named policy, field filters can be specified.
 func (h *HRaftDispatcher) RemoveFilteredPolicy(sec string, ptype string, fieldIndex int, fieldValues ...string) error {
 	command := Command{
-		Operation:   removeFilteredOperation,
+		Operation:   RemoveFilteredOperation,
 		Sec:         sec,
 		Ptype:       ptype,
 		FieldIndex:  fieldIndex,
@@ -153,7 +153,7 @@ func (h *HRaftDispatcher) RemoveFilteredPolicy(sec string, ptype string, fieldIn
 // ClearPolicy clears all policy.
 func (h *HRaftDispatcher) ClearPolicy() error {
 	command := Command{
-		Operation: clearOperation,
+		Operation: ClearOperation,
 	}
 	return h.requestBackend(command)
 }
@@ -161,7 +161,7 @@ func (h *HRaftDispatcher) ClearPolicy() error {
 // UpdatePolicy updates policy rule from all instance.
 func (h *HRaftDispatcher) UpdatePolicy(sec string, ptype string, oldRule, newRule []string) error {
 	command := Command{
-		Operation: updateOperation,
+		Operation: UpdateOperation,
 		Sec:       sec,
 		Ptype:     ptype,
 		OldRule:   oldRule,

@@ -1,13 +1,15 @@
 package casbin_hraft_dispatcher
 
+import "encoding/json"
+
 type Operation string
 
 const (
-	addOperation            Operation = "add"
-	removeOperation                   = "remove"
-	removeFilteredOperation           = "removeFiltered"
-	clearOperation                    = "clear"
-	updateOperation                   = "update"
+	AddOperation            Operation = "add"
+	RemoveOperation                   = "remove"
+	RemoveFilteredOperation           = "removeFiltered"
+	ClearOperation                    = "clear"
+	UpdateOperation                   = "update"
 )
 
 // Command represents an instruction to change the state of the engine
@@ -24,4 +26,8 @@ type Command struct {
 	// These fields will be used to update rules
 	NewRule []string `json:"newRule"`
 	OldRule []string `json:"oldRule"`
+}
+
+func (c *Command) ToBytes() ([]byte, error) {
+	return json.Marshal(c)
 }

@@ -1,6 +1,7 @@
 package casbin_hraft_dispatcher
 
 import (
+	"github.com/pkg/errors"
 	"net"
 	"os"
 	"path/filepath"
@@ -14,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//go:generate mockgen -destination mock/mock_dispatcher_store.go -package mock -source dispatcher_store.go
+//go:generate mockgen -destination mocks/mock_dispatcher_store.go -package mocks -source dispatcher_store.go
 
 type DispatcherStore interface {
 	Start() error
@@ -47,13 +48,13 @@ type DefaultDispatcherStore struct {
 
 // NewDispatcher return a instance of dispatcher.
 func NewDispatcherStore(config *DispatcherConfig) (*DefaultDispatcherStore, error) {
-	d := &DefaultDispatcherStore{DispatcherConfig: config}
+	d := &DefaultDispatcherStore{DispatcherConfig: config, logger: zap.NewExample()}
 	return d, nil
 }
 
 // NewDispatcher return a instance of dispatcher in memory.
 func NewInmemDispatcherStore(config *DispatcherConfig) (*DefaultDispatcherStore, error) {
-	d := &DefaultDispatcherStore{DispatcherConfig: config, inMemory: true}
+	d := &DefaultDispatcherStore{DispatcherConfig: config, inMemory: true, logger: zap.NewExample()}
 	return d, nil
 }
 
@@ -63,17 +64,29 @@ func (d *DefaultDispatcherStore) ensureLeader() bool {
 
 // Start performs initialization and runs server
 func (d *DefaultDispatcherStore) Start() error {
+	if d.RaftAddress == "" {
+		return errors.New("RaftAddress is required")
+	}
+	if d.ServerID == "" {
+		d.ServerID = d.RaftAddress
+	}
+	if !d.inMemory && d.TLSConfig == nil {
+		return errors.New("TLSConfig is required")
+	}
+
 	// Setup Raft configuration.
 	config := raft.DefaultConfig()
 	config.LocalID = raft.ServerID(d.ServerID)
-
-	// Setup Raft communication.
-	addr, err := net.ResolveTCPAddr("tcp", d.RaftAddress)
 
 	var transport raft.Transport
 	if d.inMemory {
 		_, transport = raft.NewInmemTransport(raft.ServerAddress(d.RaftAddress))
 	} else {
+		addr, err := net.ResolveTCPAddr("tcp", d.RaftAddress)
+		if err != nil {
+			d.logger.Error("failed to resolve tcp address", zap.Error(err), zap.String("address", d.RaftAddress))
+			return err
+		}
 		transport, err = NewTCPTransport(d.RaftAddress, addr, d.TLSConfig, 3, 10*time.Second, os.Stderr)
 		if err != nil {
 			d.logger.Error("failed to new tcp transport", zap.Error(err), zap.String("raftAddress", d.RaftAddress))
@@ -86,15 +99,15 @@ func (d *DefaultDispatcherStore) Start() error {
 	// Create the snapshot store. This allows the Raft to truncate the log.
 	var snapshots raft.SnapshotStore
 	if d.inMemory {
-		snapshots, err = raft.NewFileSnapshotStore(d.DataDir, RetainSnapshotCount, os.Stderr)
+		snapshots = raft.NewInmemSnapshotStore()
+	} else {
+		fileSnapshots, err := raft.NewFileSnapshotStore(d.DataDir, RetainSnapshotCount, os.Stderr)
 		if err != nil {
 			d.logger.Error("failed to new file snapshot store", zap.Error(err), zap.String("dataDir", d.DataDir))
 			return err
 		}
-	} else {
-		snapshots = raft.NewInmemSnapshotStore()
+		snapshots = fileSnapshots
 	}
-
 	d.snapshotStore = snapshots
 
 	if d.inMemory {
