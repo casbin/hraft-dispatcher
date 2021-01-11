@@ -1,4 +1,4 @@
-package casbin_hraft_dispatcher
+package hraftdispatcher
 
 import (
 	"crypto/tls"
