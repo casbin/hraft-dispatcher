@@ -12,18 +12,19 @@ import (
 
 // FSM is state storage.
 type FSM struct {
-	commands     []Command
-	enforcer     casbin.IDistributedEnforcer
-	ensureLeader func() bool
-	mutex        *sync.RWMutex
-	logger       *zap.Logger
+	commands      []Command
+	enforcer      casbin.IDistributedEnforcer
+	shouldPersist func() bool
+	mutex         *sync.RWMutex
+	logger        *zap.Logger
 }
 
 func NewFSM(enforcer casbin.IDistributedEnforcer, logger *zap.Logger) (*FSM, error) {
 	f := &FSM{
-		enforcer: enforcer,
-		logger:   logger,
-		mutex:    &sync.RWMutex{},
+		enforcer:      enforcer,
+		logger:        logger,
+		mutex:         &sync.RWMutex{},
+		shouldPersist: func() bool { return false },
 	}
 
 	return f, nil
@@ -41,10 +42,6 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 	return f.apply(cmd)
 }
 
-func (f *FSM) SetEnsureLeader(fn func() bool) {
-	f.ensureLeader = fn
-}
-
 // Apply applies a Raft log entry to the casbin.
 func (f *FSM) apply(cmd Command) error {
 	f.mutex.Lock()
@@ -53,19 +50,19 @@ func (f *FSM) apply(cmd Command) error {
 	f.commands = append(f.commands, cmd)
 	switch cmd.Operation {
 	case AddOperation:
-		_, err := f.enforcer.AddPolicySelf(f.ensureLeader, cmd.Sec, cmd.Ptype, cmd.Rules)
+		_, err := f.enforcer.AddPolicySelf(f.shouldPersist, cmd.Sec, cmd.Ptype, cmd.Rules)
 		return err
 	case RemoveOperation:
-		_, err := f.enforcer.RemovePolicySelf(f.ensureLeader, cmd.Sec, cmd.Ptype, cmd.Rules)
+		_, err := f.enforcer.RemovePolicySelf(f.shouldPersist, cmd.Sec, cmd.Ptype, cmd.Rules)
 		return err
 	case RemoveFilteredOperation:
-		_, err := f.enforcer.RemoveFilteredPolicySelf(f.ensureLeader, cmd.Sec, cmd.Ptype, cmd.FieldIndex, cmd.FieldValues...)
+		_, err := f.enforcer.RemoveFilteredPolicySelf(f.shouldPersist, cmd.Sec, cmd.Ptype, cmd.FieldIndex, cmd.FieldValues...)
 		return err
 	case ClearOperation:
-		err := f.enforcer.ClearPolicySelf(f.ensureLeader)
+		err := f.enforcer.ClearPolicySelf(f.shouldPersist)
 		return err
 	case UpdateOperation:
-		_, err := f.enforcer.UpdatePolicySelf(f.ensureLeader, cmd.Sec, cmd.Ptype, cmd.OldRule, cmd.NewRule)
+		_, err := f.enforcer.UpdatePolicySelf(f.shouldPersist, cmd.Sec, cmd.Ptype, cmd.OldRule, cmd.NewRule)
 		return err
 	default:
 		err := fmt.Errorf("unknown command: %v", cmd)

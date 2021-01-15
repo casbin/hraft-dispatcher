@@ -10,8 +10,10 @@ import (
 type DispatcherConfig struct {
 	// Enforcer is a enforcer of casbin.
 	Enforcer casbin.IDistributedEnforcer
-	// TLSConfig is used to configure a TLS client or server.
-	TLSConfig *tls.Config
+	// ServerTLSConfig is used to configure a TLS server.
+	ServerTLSConfig *tls.Config
+	// ClientTLSConfig is used to configure a TLS client.
+	ClientTLSConfig *tls.Config
 	// DataDir holds raft data, default to the DefaultDataDir.
 	DataDir string
 	// ServerID is a unique string identifying this server for all time, default to the RaftAddress.

@@ -30,11 +30,16 @@ func NewHRaftDispatcher(config *DispatcherConfig) (*HRaftDispatcher, error) {
 
 // initialize is used to initialize the dispatcher config.
 func (h *HRaftDispatcher) initialize() error {
-	if h.config.TLSConfig == nil {
-		return errors.New("TLSConfig is required")
+	if h.config.ServerTLSConfig == nil {
+		return errors.New("no ServerTLSConfig found")
 	}
+
+	if h.config.ClientTLSConfig == nil {
+		return errors.New("no ClientTLSConfig found")
+	}
+
 	if h.config.Enforcer == nil {
-		return errors.New("Enforcer is required")
+		return errors.New("no Enforcer found")
 	}
 
 	if h.config.HttpAddress == "" {
@@ -55,7 +60,7 @@ func (h *HRaftDispatcher) initialize() error {
 	h.client = &http.Client{
 		Transport: &http2.Transport{
 			AllowHTTP:       false,
-			TLSClientConfig: h.config.TLSConfig,
+			TLSClientConfig: h.config.ClientTLSConfig,
 		},
 	}
 	dispatcherStore, err := NewDispatcherStore(h.config)
@@ -64,7 +69,7 @@ func (h *HRaftDispatcher) initialize() error {
 	}
 	h.dispatcherStore = dispatcherStore
 
-	dispatcherBackend, err := NewDispatcherBackend(h.config.HttpAddress, h.config.TLSConfig, dispatcherStore)
+	dispatcherBackend, err := NewDispatcherBackend(h.config.HttpAddress, h.config.ServerTLSConfig, dispatcherStore)
 	if err != nil {
 		return err
 	}

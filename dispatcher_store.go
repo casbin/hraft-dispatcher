@@ -65,13 +65,20 @@ func (d *DefaultDispatcherStore) ensureLeader() bool {
 // Start performs initialization and runs server
 func (d *DefaultDispatcherStore) Start() error {
 	if d.RaftAddress == "" {
-		return errors.New("RaftAddress is required")
+		return errors.New("no RaftAddress found")
 	}
+
 	if d.ServerID == "" {
 		d.ServerID = d.RaftAddress
 	}
-	if !d.inMemory && d.TLSConfig == nil {
-		return errors.New("TLSConfig is required")
+
+	if !d.inMemory {
+		if d.ServerTLSConfig == nil {
+			return errors.New("no ServerTLSConfig is required")
+		}
+		if d.ClientTLSConfig == nil {
+			return errors.New("no ClientTLSConfig is required")
+		}
 	}
 
 	// Setup Raft configuration.
@@ -87,7 +94,7 @@ func (d *DefaultDispatcherStore) Start() error {
 			d.logger.Error("failed to resolve tcp address", zap.Error(err), zap.String("address", d.RaftAddress))
 			return err
 		}
-		transport, err = NewTCPTransport(d.RaftAddress, addr, d.TLSConfig, 3, 10*time.Second, os.Stderr)
+		transport, err = NewTCPTransport(d.RaftAddress, addr, d.ServerTLSConfig, d.ClientTLSConfig, 3, 10*time.Second, os.Stderr)
 		if err != nil {
 			d.logger.Error("failed to new tcp transport", zap.Error(err), zap.String("raftAddress", d.RaftAddress))
 			return err
@@ -142,9 +149,6 @@ func (d *DefaultDispatcherStore) Start() error {
 		return err
 	}
 	d.raft = ra
-
-	// Must add checking leader to fsm
-	fsm.SetEnsureLeader(d.ensureLeader)
 
 	// Runs Raft server
 	configuration := raft.Configuration{
