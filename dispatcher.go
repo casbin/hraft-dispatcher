@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/hashicorp/go-multierror"
-	"net/http"
-
 	"github.com/hashicorp/raft"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
+	"net"
+	"net/http"
 )
 
 // HRaftDispatcher implementation a dispatcher base on Hashicorp's Raft for Casbin.
@@ -30,23 +31,17 @@ func NewHRaftDispatcher(config *DispatcherConfig) (*HRaftDispatcher, error) {
 
 // initialize is used to initialize the dispatcher config.
 func (h *HRaftDispatcher) initialize() error {
-	if h.config.ServerTLSConfig == nil {
-		return errors.New("no ServerTLSConfig found")
+	if h.config.TLSConfig == nil {
+		return errors.New("no tls config found")
 	}
-
-	if h.config.ClientTLSConfig == nil {
-		return errors.New("no ClientTLSConfig found")
-	}
-
 	if h.config.Enforcer == nil {
 		return errors.New("no Enforcer found")
 	}
-
+	if h.config.RaftAddress == "" {
+		return errors.New("no raft address found")
+	}
 	if h.config.HttpAddress == "" {
 		h.config.HttpAddress = DefaultHttpAddress
-	}
-	if h.config.RaftAddress == "" {
-		h.config.RaftAddress = DefaultRaftAddress
 	}
 	if h.config.RaftConfig == nil {
 		h.config.RaftConfig = raft.DefaultConfig()
@@ -60,7 +55,7 @@ func (h *HRaftDispatcher) initialize() error {
 	h.client = &http.Client{
 		Transport: &http2.Transport{
 			AllowHTTP:       false,
-			TLSClientConfig: h.config.ClientTLSConfig,
+			TLSClientConfig: h.config.TLSConfig,
 		},
 	}
 	dispatcherStore, err := NewDispatcherStore(h.config)
@@ -69,7 +64,7 @@ func (h *HRaftDispatcher) initialize() error {
 	}
 	h.dispatcherStore = dispatcherStore
 
-	dispatcherBackend, err := NewDispatcherBackend(h.config.HttpAddress, h.config.ServerTLSConfig, dispatcherStore)
+	dispatcherBackend, err := NewDispatcherBackend(h.config.HttpAddress, h.config.TLSConfig, dispatcherStore)
 	if err != nil {
 		return err
 	}
@@ -108,8 +103,10 @@ func (h *HRaftDispatcher) Stop() error {
 // requestBackend requests the dispatcher backend.
 func (h *HRaftDispatcher) requestBackend(command Command) error {
 	b, _ := json.Marshal(command)
-	resp, err := h.client.Post(h.config.HttpAddress, "application/json", bytes.NewBuffer(b))
+	addr, _ := net.ResolveTCPAddr("tcp", h.config.HttpAddress)
+	resp, err := h.client.Post(fmt.Sprintf("https://%s:%d/commands", "127.0.0.1", addr.Port), "application/json", bytes.NewBuffer(b))
 	if err != nil {
+		h.logger.Error("failed to request backend", zap.Error(err))
 		return err
 	}
 	defer resp.Body.Close()

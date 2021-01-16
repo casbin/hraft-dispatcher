@@ -5,10 +5,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"golang.org/x/net/http2"
 
@@ -49,7 +50,11 @@ func NewDispatcherBackend(address string, tlsConfig *tls.Config, store Dispatche
 }
 
 func (d *DispatcherBackend) Start() error {
-	return d.srv.ListenAndServeTLS("", "")
+	err := d.srv.ListenAndServeTLS("", "")
+	if err != nil && err.Error() != http.ErrServerClosed.Error() {
+		return err
+	}
+	return nil
 }
 
 func (d *DispatcherBackend) Stop(ctx context.Context) error {

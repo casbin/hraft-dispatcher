@@ -73,11 +73,8 @@ func (d *DefaultDispatcherStore) Start() error {
 	}
 
 	if !d.inMemory {
-		if d.ServerTLSConfig == nil {
-			return errors.New("no ServerTLSConfig is required")
-		}
-		if d.ClientTLSConfig == nil {
-			return errors.New("no ClientTLSConfig is required")
+		if d.TLSConfig == nil {
+			return errors.New("no tls config found")
 		}
 	}
 
@@ -94,7 +91,7 @@ func (d *DefaultDispatcherStore) Start() error {
 			d.logger.Error("failed to resolve tcp address", zap.Error(err), zap.String("address", d.RaftAddress))
 			return err
 		}
-		transport, err = NewTCPTransport(d.RaftAddress, addr, d.ServerTLSConfig, d.ClientTLSConfig, 3, 10*time.Second, os.Stderr)
+		transport, err = NewTCPTransport(d.RaftAddress, addr, d.TLSConfig, 3, 10*time.Second, os.Stderr)
 		if err != nil {
 			d.logger.Error("failed to new tcp transport", zap.Error(err), zap.String("raftAddress", d.RaftAddress))
 			return err
@@ -161,9 +158,9 @@ func (d *DefaultDispatcherStore) Start() error {
 	}
 
 	f := ra.BootstrapCluster(configuration)
-	if f.Error() != nil {
-		d.logger.Error("failed to boostrap cluster", zap.Error(err))
-		return err
+	if f.Error() != raft.ErrCantBootstrap {
+		d.logger.Error("failed to boostrap cluster", zap.Error(f.Error()))
+		return f.Error()
 	}
 
 	return nil

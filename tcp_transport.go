@@ -16,10 +16,9 @@ var (
 
 // TCPStreamLayer implements StreamLayer interface for plain TCP.
 type TCPStreamLayer struct {
-	advertise       net.Addr
-	listener        *net.TCPListener
-	serverTLSConfig *tls.Config
-	clientTLSConfig *tls.Config
+	advertise net.Addr
+	listener  net.Listener
+	tlsConfig *tls.Config
 }
 
 // NewTCPTransport returns a NetworkTransport that is built on top of
@@ -27,41 +26,36 @@ type TCPStreamLayer struct {
 func NewTCPTransport(
 	bindAddr string,
 	advertise net.Addr,
-	serverTLSConfig *tls.Config,
-	clientTLSConfig *tls.Config,
+	tlsConfig *tls.Config,
 	maxPool int,
 	timeout time.Duration,
 	logOutput io.Writer,
 ) (*raft.NetworkTransport, error) {
-	return newTCPTransport(bindAddr, advertise, serverTLSConfig, clientTLSConfig, func(stream raft.StreamLayer) *raft.NetworkTransport {
+	return newTCPTransport(bindAddr, advertise, tlsConfig, func(stream raft.StreamLayer) *raft.NetworkTransport {
 		return raft.NewNetworkTransport(stream, maxPool, timeout, logOutput)
 	})
 }
 
 func newTCPTransport(bindAddr string,
 	advertise net.Addr,
-	serverTLSConfig *tls.Config,
-	clientTLSConfig *tls.Config,
+	tlsConfig *tls.Config,
 	transportCreator func(stream raft.StreamLayer) *raft.NetworkTransport) (*raft.NetworkTransport, error) {
 
-	if serverTLSConfig == nil {
-		return nil, errors.New("no serverTLSConfig found")
-	}
-	if clientTLSConfig == nil {
-		return nil, errors.New("no clientTLSConfig found")
+	if tlsConfig == nil {
+		return nil, errors.New("no tls config found")
 	}
 
 	// Try to bind
-	list, err := tls.Listen("tcp", bindAddr, serverTLSConfig)
+	list, err := tls.Listen("tcp", bindAddr, tlsConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create stream
 	stream := &TCPStreamLayer{
-		advertise:       advertise,
-		listener:        list.(*net.TCPListener),
-		clientTLSConfig: clientTLSConfig,
+		advertise: advertise,
+		listener:  list,
+		tlsConfig: tlsConfig,
 	}
 
 	// Verify that we have a usable advertise address
@@ -83,7 +77,7 @@ func newTCPTransport(bindAddr string,
 // Dial implements the StreamLayer interface.
 func (t *TCPStreamLayer) Dial(address raft.ServerAddress, timeout time.Duration) (net.Conn, error) {
 	dialer := &net.Dialer{Timeout: timeout}
-	return tls.DialWithDialer(dialer, "tcp", string(address), t.clientTLSConfig)
+	return tls.DialWithDialer(dialer, "tcp", string(address), t.tlsConfig)
 }
 
 // Accept implements the net.Listener interface.
