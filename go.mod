@@ -14,6 +14,7 @@ require (
 	github.com/lib/pq v1.9.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.6.1
+	go.etcd.io/bbolt v1.3.5
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
