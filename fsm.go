@@ -37,7 +37,7 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 	var cmd Command
 	if err := json.Unmarshal(log.Data, &cmd); err != nil {
 		f.logger.Error("cannot to parse command from raft.Log", zap.Any("log", log), zap.Error(err))
-		panic(err)
+		return err
 	}
 	return f.apply(cmd)
 }
@@ -67,11 +67,12 @@ func (f *FSM) apply(cmd Command) error {
 	default:
 		err := fmt.Errorf("unknown command: %v", cmd)
 		f.logger.Error(err.Error())
-		panic(err)
+		return err
 	}
 }
 
 func (f *FSM) Restore(rc io.ReadCloser) error {
+	f.logger.Info("restore from snapshot")
 	var cmds []Command
 	if err := json.NewDecoder(rc).Decode(&cmds); err != nil {
 		f.logger.Error("cannot to restore from snapshot", zap.Error(err))
@@ -86,11 +87,14 @@ func (f *FSM) Restore(rc io.ReadCloser) error {
 }
 
 func (f *FSM) Snapshot() (raft.FSMSnapshot, error) {
+	f.logger.Info("persist the fsm snapshot")
 	var cmds []Command
-	f.mutex.RLocker()
+
+	f.mutex.RLock()
 	for _, item := range f.commands {
 		cmds = append(cmds, item)
 	}
 	f.mutex.RUnlock()
+
 	return &fsmSnapshot{commands: cmds}, nil
 }
