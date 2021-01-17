@@ -3,10 +3,11 @@ package hraftdispatcher
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 
 	bolt "go.etcd.io/bbolt"
 
@@ -49,6 +50,27 @@ func NewFSM(path string, enforcer casbin.IDistributedEnforcer, logger *zap.Logge
 		return nil, errors.Wrapf(err, "failed to open bolt file")
 	}
 
+	// restore casbin memory from db
+	err := f.db.View(func(tx *bolt.Tx) error {
+		bkt := tx.Bucket(policyBucketName)
+		err := bkt.ForEach(func(k, v []byte) error {
+			var rule Rule
+			err := json.Unmarshal(k, &rule)
+			if err != nil {
+				return err
+			}
+			_, err = f.enforcer.AddPolicySelf(f.shouldPersist, rule.Sec, rule.PType, [][]string{rule.Rule})
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return f, nil
 }
 
@@ -62,19 +84,9 @@ func (f *FSM) openDBFile(dbPath string) error {
 		return err
 	}
 
-	err = boltDB.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists(policyBucketName)
-		if err != nil {
-			return errors.Wrap(err, "failed to create policy bucket")
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
 	f.db = boltDB
-	return nil
+
+	return f.CreateBucket(policyBucketName)
 }
 
 func (f *FSM) Apply(log *raft.Log) interface{} {
@@ -86,12 +98,14 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		f.logger.Error("cannot to parse command from raft.Log", zap.Any("log", log), zap.Error(err))
 		return err
 	}
+	f.mutex.Lock()
+	f.commands = append(f.commands, cmd)
+	f.mutex.Unlock()
 	return f.apply(cmd)
 }
 
 // Apply applies a Raft log entry to the casbin.
 func (f *FSM) apply(cmd Command) error {
-	f.commands = append(f.commands, cmd)
 	switch cmd.Operation {
 	case AddOperation:
 		effected, err := f.enforcer.AddPolicySelf(f.shouldPersist, cmd.Sec, cmd.Ptype, cmd.Rules)
@@ -144,7 +158,28 @@ func (f *FSM) Restore(rc io.ReadCloser) error {
 	}
 
 	f.mutex.Lock()
+
+	// reset policy bucket
+	err := f.DeleteBucket(policyBucketName)
+	if err != nil {
+		return err
+	}
+	err = f.CreateBucket(policyBucketName)
+	if err != nil {
+		return err
+	}
+
+	// reset fsm state
 	f.commands = cmds
+
+	// reset casbin
+	f.enforcer.ClearPolicy()
+	for _, cmd := range cmds {
+		err = f.apply(cmd)
+		if err != nil {
+			return err
+		}
+	}
 	f.mutex.Unlock()
 
 	return nil
@@ -181,6 +216,22 @@ func newRuleBytes(sec, pType string, rule []string) ([]byte, error) {
 		return nil, err
 	}
 	return key, nil
+}
+
+func (f *FSM) CreateBucket(name []byte) error {
+	return f.db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists(policyBucketName)
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed to create %s bucket", name))
+		}
+		return nil
+	})
+}
+
+func (f *FSM) DeleteBucket(name []byte) error {
+	return f.db.Update(func(tx *bolt.Tx) error {
+		return tx.DeleteBucket(name)
+	})
 }
 
 func (f *FSM) Put(sec, pType string, rules [][]string) error {

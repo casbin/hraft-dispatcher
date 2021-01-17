@@ -133,7 +133,7 @@ func (d *DefaultDispatcherStore) Start() error {
 	}
 
 	// Create fms
-	fsm, err := NewFSM(d.Enforcer, d.logger)
+	fsm, err := NewFSM(d.DataDir, d.Enforcer, d.logger)
 	if err != nil {
 		d.logger.Error("failed to new fsm", zap.Error(err))
 		return err
