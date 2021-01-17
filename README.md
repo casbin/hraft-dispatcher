@@ -6,7 +6,9 @@ A dispatcher based on Hashicorp's Raft for Casbin.
 
 - Add unit tests
 - Add integration tests
-- TLS Transport
+- Implement the snapshot base on bbolt
+- Implement the add/remove node
+
 
 ## Contribution
 
