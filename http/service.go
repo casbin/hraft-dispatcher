@@ -4,17 +4,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"golang.org/x/net/http2"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi"
 
 	"github.com/nodece/casbin-hraft-dispatcher/command"
-
-	"github.com/pkg/errors"
-
-	"golang.org/x/net/http2"
 
 	"google.golang.org/protobuf/proto"
 
@@ -47,6 +45,7 @@ type Store interface {
 // Service setups a HTTP service for forward data of raft node.
 type Service struct {
 	srv   *http.Server
+	ln    net.Listener
 	store Store
 
 	logger *zap.Logger
@@ -54,14 +53,6 @@ type Service struct {
 
 // NewService creates a Service.
 func NewService(address string, tlsConfig *tls.Config, store Store) (*Service, error) {
-	if tlsConfig == nil {
-		return nil, errors.New("tlsConfig cannot be nil")
-	}
-
-	if address == "" {
-		address = ":6790"
-	}
-
 	s := &Service{
 		logger: zap.NewExample(),
 		store:  store,
@@ -87,9 +78,6 @@ func NewService(address string, tlsConfig *tls.Config, store Store) (*Service, e
 		TLSConfig:         tlsConfig,
 	}
 
-	// Setup HTTP/2 support
-	_ = http2.ConfigureServer(s.srv, nil)
-
 	return s, nil
 }
 
@@ -107,12 +95,25 @@ func (s *Service) leaderMiddleware(next http.Handler) http.Handler {
 }
 
 // Start starts this service.
+// It always returns a non-nil error. After Shutdown or Close, the returned error is http.ErrServerClosed.
 func (s *Service) Start() error {
-	err := s.srv.ListenAndServeTLS("", "")
-	if err != nil && err.Error() != http.ErrServerClosed.Error() {
+	_ = http2.ConfigureServer(s.srv, nil)
+
+	addr := s.srv.Addr
+	if addr == "" {
+		addr = ":https"
+	}
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
 		return err
 	}
-	return nil
+	s.logger.Info(fmt.Sprintf("linstening on %s", ln.Addr()))
+	defer ln.Close()
+	s.ln = ln
+
+	err = s.srv.ServeTLS(ln, "", "")
+	return err
 }
 
 // Stop stops this service.
@@ -260,4 +261,8 @@ func (s *Service) handleRemoveNode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
+}
+
+func (s *Service) Addr() string {
+	return s.ln.Addr().String()
 }
