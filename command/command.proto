@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package command;
+
+option go_package = "github.com/nodece/casbin-hraft-dispatcher/command";
+
+message StringArray {
+  repeated string items = 1;
+}
+
+message AddPolicyRequest {
+  string sec = 1;
+  string pType = 2;
+  repeated StringArray rules = 3;
+}
+
+message RemovePolicyRequest {
+  string sec = 1;
+  string pType = 2;
+  repeated StringArray rules = 3;
+}
+
+message RemoveFilteredPolicyRequest {
+  string sec = 1;
+  string pType = 2;
+  int32  fieldIndex = 3;
+  repeated string fieldValues = 4;
+}
+
+message UpdatePolicyRequest {
+  string sec = 1;
+  string pType = 2;
+  repeated string newRule = 3;
+  repeated string oldRule = 4;
+}
+
+message Command {
+  enum Type {
+    COMMAND_TYPE_ADD = 0;
+    COMMAND_TYPE_REMOVE = 1;
+    COMMAND_TYPE_REMOVE_FILTERED = 2;
+    COMMAND_TYPE_UPDATE = 4;
+    COMMAND_TYPE_CLEAR = 3;
+  }
+
+  Type type = 1;
+  bytes data = 2;
+}
+
+message AddNodeRequest {
+  string address = 1;
+  string id = 2;
+}
+
+message RemoveNodeRequest {
+  string id = 1;
+}
