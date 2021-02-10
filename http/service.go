@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 	"io/ioutil"
 	"net"
@@ -13,8 +15,6 @@ import (
 	"github.com/go-chi/chi"
 
 	"github.com/nodece/casbin-hraft-dispatcher/command"
-
-	"google.golang.org/protobuf/proto"
 
 	"go.uber.org/zap"
 )
@@ -53,6 +53,10 @@ type Service struct {
 
 // NewService creates a Service.
 func NewService(address string, tlsConfig *tls.Config, store Store) (*Service, error) {
+	if store == nil {
+		return nil, errors.New("store is not provided")
+	}
+
 	s := &Service{
 		logger: zap.NewExample(),
 		store:  store,
@@ -144,7 +148,7 @@ func (s *Service) handleAddPolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cmd command.AddPolicyRequest
-	err = proto.Unmarshal(data, &cmd)
+	err = jsoniter.Unmarshal(data, &cmd)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -158,7 +162,7 @@ func (s *Service) handleAddPolicy(w http.ResponseWriter, r *http.Request) {
 
 // handleRemovePolicy handles the request to remove a set of rules.
 func (s *Service) handleRemovePolicy(w http.ResponseWriter, r *http.Request) {
-	removeType := chi.URLParam(r, "type")
+	removeType := r.URL.Query().Get("type")
 	switch removeType {
 	case "all":
 		err := s.store.ClearPolicy()
@@ -173,7 +177,7 @@ func (s *Service) handleRemovePolicy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var cmd command.RemoveFilteredPolicyRequest
-		err = proto.Unmarshal(data, &cmd)
+		err = jsoniter.Unmarshal(data, &cmd)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -190,7 +194,7 @@ func (s *Service) handleRemovePolicy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var cmd command.RemovePolicyRequest
-		err = proto.Unmarshal(data, &cmd)
+		err = jsoniter.Unmarshal(data, &cmd)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -213,7 +217,7 @@ func (s *Service) handleUpdatePolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cmd command.UpdatePolicyRequest
-	err = proto.Unmarshal(data, &cmd)
+	err = jsoniter.Unmarshal(data, &cmd)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -232,7 +236,7 @@ func (s *Service) handleJoinNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cmd command.AddNodeRequest
-	err = proto.Unmarshal(data, &cmd)
+	err = jsoniter.Unmarshal(data, &cmd)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -251,7 +255,7 @@ func (s *Service) handleRemoveNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cmd command.RemoveNodeRequest
-	err = proto.Unmarshal(data, &cmd)
+	err = jsoniter.Unmarshal(data, &cmd)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
