@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
-	"golang.org/x/net/http2"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+	"golang.org/x/net/http2"
 
 	"github.com/go-chi/chi"
 
