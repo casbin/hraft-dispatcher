@@ -1,4 +1,4 @@
-package raft
+package store
 
 import (
 	"crypto/tls"

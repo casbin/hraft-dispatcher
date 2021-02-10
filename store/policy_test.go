@@ -1,9 +1,9 @@
-package raft
+package store
 
 import (
 	"bytes"
 	"github.com/golang/mock/gomock"
-	"github.com/nodece/casbin-hraft-dispatcher/raft/mocks"
+	"github.com/nodece/casbin-hraft-dispatcher/store/mocks"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"

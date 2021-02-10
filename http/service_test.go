@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 func TestNewService(t *testing.T) {
@@ -75,12 +74,9 @@ func TestAddPolicy(t *testing.T) {
 	s, err := NewService("127.0.0.1:0", ts.TLS, store)
 	assert.NoError(t, err)
 
-	go func() {
-		err = s.Start()
-		assert.EqualError(t, err, http.ErrServerClosed.Error())
-	}()
+	err = s.Start()
+	assert.NoError(t, err)
 	defer s.Stop(context.Background())
-	<-time.After(1 * time.Second)
 
 	addPolicyRequest := &command.AddPolicyRequest{
 		Sec:   "p",
@@ -114,12 +110,10 @@ func TestRemovePolicy(t *testing.T) {
 	s, err := NewService("127.0.0.1:0", ts.TLS, store)
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
-	go func() {
-		err = s.Start()
-		assert.EqualError(t, err, http.ErrServerClosed.Error())
-	}()
+
+	err = s.Start()
+	assert.NoError(t, err)
 	defer s.Stop(context.Background())
-	<-time.After(1 * time.Second)
 
 	removePolicyRequest := &command.RemovePolicyRequest{
 		Sec:   "p",
@@ -153,12 +147,10 @@ func TestRemoveFilteredPolicy(t *testing.T) {
 	s, err := NewService("127.0.0.1:0", ts.TLS, store)
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
-	go func() {
-		err = s.Start()
-		assert.EqualError(t, err, http.ErrServerClosed.Error())
-	}()
+
+	err = s.Start()
+	assert.NoError(t, err)
 	defer s.Stop(context.Background())
-	<-time.After(1 * time.Second)
 
 	removeFilteredPolicyRequest := &command.RemoveFilteredPolicyRequest{
 		Sec:         "p",
@@ -193,12 +185,10 @@ func TestUpdatePolicy(t *testing.T) {
 	s, err := NewService("127.0.0.1:0", ts.TLS, store)
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
-	go func() {
-		err = s.Start()
-		assert.EqualError(t, err, http.ErrServerClosed.Error())
-	}()
+
+	err = s.Start()
+	assert.NoError(t, err)
 	defer s.Stop(context.Background())
-	<-time.After(1 * time.Second)
 
 	updatePolicyRequest := &command.UpdatePolicyRequest{
 		Sec:     "p",
@@ -233,12 +223,10 @@ func TestClearPolicy(t *testing.T) {
 	s, err := NewService("127.0.0.1:0", ts.TLS, store)
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
-	go func() {
-		err = s.Start()
-		assert.EqualError(t, err, http.ErrServerClosed.Error())
-	}()
+
+	err = s.Start()
+	assert.NoError(t, err)
 	defer s.Stop(context.Background())
-	<-time.After(1 * time.Second)
 
 	store.EXPECT().Leader().Return(true, s.Addr())
 	store.EXPECT().ClearPolicy().Return(nil)
@@ -265,12 +253,10 @@ func TestJoinNode(t *testing.T) {
 	s, err := NewService("127.0.0.1:0", ts.TLS, store)
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
-	go func() {
-		err = s.Start()
-		assert.EqualError(t, err, http.ErrServerClosed.Error())
-	}()
+
+	err = s.Start()
+	assert.NoError(t, err)
 	defer s.Stop(context.Background())
-	<-time.After(1 * time.Second)
 
 	addNodeRequest := &command.AddNodeRequest{
 		Id:      "test-main",
@@ -303,12 +289,10 @@ func TestRemoveNode(t *testing.T) {
 	s, err := NewService("127.0.0.1:0", ts.TLS, store)
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
-	go func() {
-		err = s.Start()
-		assert.EqualError(t, err, http.ErrServerClosed.Error())
-	}()
+
+	err = s.Start()
+	assert.NoError(t, err)
 	defer s.Stop(context.Background())
-	<-time.After(1 * time.Second)
 
 	removeNodeRequest := &command.RemoveNodeRequest{
 		Id: "test-main",

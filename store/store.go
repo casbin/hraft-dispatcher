@@ -1,7 +1,8 @@
-package raft
+package store
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -166,6 +167,16 @@ func (s *Store) Stop() error {
 	}
 
 	return result
+}
+
+// IsInitializedCluster checks whether the cluster has been initialized.
+func (s *Store) IsInitializedCluster() bool {
+	if _, err := os.Stat(path.Join(s.raftDir, raftDBName)); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
 }
 
 // applyProtoMessage applies a proto message.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -114,16 +115,30 @@ func (s *Service) Start() error {
 		return err
 	}
 	s.logger.Info(fmt.Sprintf("linstening on %s", ln.Addr()))
-	defer ln.Close()
 	s.ln = ln
 
-	err = s.srv.ServeTLS(ln, "", "")
-	return err
+	go func() {
+		err = s.srv.ServeTLS(ln, "", "")
+		if err != nil && err != http.ErrServerClosed {
+			s.logger.Error("unable to serve http", zap.Error(err))
+		}
+	}()
+
+	return nil
 }
 
 // Stop stops this service.
 func (s *Service) Stop(ctx context.Context) error {
-	return s.srv.Shutdown(ctx)
+	var ret error
+	err := s.srv.Shutdown(ctx)
+	if err != nil {
+		ret = multierror.Append(ret, err)
+	}
+	err = s.ln.Close()
+	if err != nil {
+		ret = multierror.Append(ret, err)
+	}
+	return ret
 }
 
 // getRedirectURL returns a URL by the given host.
