@@ -1,14 +1,16 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/go-multierror"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -46,9 +48,10 @@ type Store interface {
 
 // Service setups a HTTP service for forward data of raft node.
 type Service struct {
-	srv   *http.Server
-	ln    net.Listener
-	store Store
+	srv        *http.Server
+	ln         net.Listener
+	store      Store
+	httpClient *http.Client
 
 	logger *zap.Logger
 }
@@ -59,9 +62,17 @@ func NewService(address string, tlsConfig *tls.Config, store Store) (*Service, e
 		return nil, errors.New("store is not provided")
 	}
 
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http2.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+	}
+
 	s := &Service{
-		logger: zap.NewExample(),
-		store:  store,
+		logger:     zap.NewExample(),
+		store:      store,
+		httpClient: httpClient,
 	}
 
 	r := chi.NewRouter()
@@ -285,4 +296,107 @@ func (s *Service) handleRemoveNode(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) Addr() string {
 	return s.ln.Addr().String()
+}
+
+func (s *Service) DoAddPolicyRequest(request *command.AddPolicyRequest) error {
+	b, err := jsoniter.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/add", s.Addr()), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
+}
+
+func (s *Service) DoRemovePolicyRequest(request *command.RemovePolicyRequest) error {
+	b, err := jsoniter.Marshal(request)
+	if err != nil {
+		return err
+	}
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/remove", s.Addr()), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
+}
+
+func (s *Service) DoRemoveFilteredPolicyRequest(request *command.RemoveFilteredPolicyRequest) error {
+	b, err := jsoniter.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/remove?type=filtered", s.Addr()), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
+}
+
+func (s *Service) DoClearPolicyRequest() error {
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/remove?type=all", s.Addr()), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
+}
+
+func (s *Service) DoUpdatePolicyRequest(request *command.UpdatePolicyRequest) error {
+	b, err := jsoniter.Marshal(request)
+	if err != nil {
+		return err
+	}
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/update", s.Addr()), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
 }

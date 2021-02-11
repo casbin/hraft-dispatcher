@@ -2,20 +2,27 @@ package hraftdispatcher
 
 import (
 	"crypto/tls"
+
+	"github.com/casbin/casbin/v2/persist"
 	"github.com/hashicorp/raft"
+	"github.com/nodece/casbin-hraft-dispatcher/command"
 	"github.com/nodece/casbin-hraft-dispatcher/http"
 	"github.com/nodece/casbin-hraft-dispatcher/store"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-type HRaftDispatcher struct {
-	store     http.Store
-	tlsConfig *tls.Config
+var _ persist.Dispatcher = &HRaftDispatcher{}
 
-	logger *zap.Logger
+// HRaftDispatcher implements the persist.Dispatcher interface.
+type HRaftDispatcher struct {
+	store       http.Store
+	tlsConfig   *tls.Config
+	httpService *http.Service
+	logger      *zap.Logger
 }
 
+// NewHRaftDispatcher returns a HRaftDispatcher.
 func NewHRaftDispatcher(config Config) (*HRaftDispatcher, error) {
 	if config.Enforcer == nil {
 		return nil, errors.New("Enforcer is not provided in config")
@@ -106,8 +113,67 @@ func NewHRaftDispatcher(config Config) (*HRaftDispatcher, error) {
 	}
 
 	return &HRaftDispatcher{
-		store:     s,
-		tlsConfig: config.TLSConfig,
-		logger:    logger,
+		store:       s,
+		tlsConfig:   config.TLSConfig,
+		httpService: httpService,
+		logger:      logger,
 	}, nil
+}
+
+//AddPolicies implements the persist.Dispatcher interface.
+func (h *HRaftDispatcher) AddPolicies(sec string, pType string, rules [][]string) error {
+	var items []*command.StringArray
+	for _, rule := range rules {
+		var item = &command.StringArray{Items: rule}
+		items = append(items, item)
+	}
+
+	addPolicyRequest := &command.AddPolicyRequest{
+		Sec:   sec,
+		PType: pType,
+		Rules: items,
+	}
+	return h.httpService.DoAddPolicyRequest(addPolicyRequest)
+}
+
+// RemovePolicies implements the persist.Dispatcher interface.
+func (h *HRaftDispatcher) RemovePolicies(sec string, pType string, rules [][]string) error {
+	var items []*command.StringArray
+	for _, rule := range rules {
+		var item = &command.StringArray{Items: rule}
+		items = append(items, item)
+	}
+
+	request := &command.RemovePolicyRequest{
+		Sec:   sec,
+		PType: pType,
+		Rules: items,
+	}
+	return h.httpService.DoRemovePolicyRequest(request)
+}
+
+// RemoveFilteredPolicy implements the persist.Dispatcher interface.
+func (h *HRaftDispatcher) RemoveFilteredPolicy(sec string, pType string, fieldIndex int, fieldValues ...string) error {
+	request := &command.RemoveFilteredPolicyRequest{
+		Sec:        sec,
+		PType:      pType,
+		FieldIndex: int32(fieldIndex),
+	}
+	return h.httpService.DoRemoveFilteredPolicyRequest(request)
+}
+
+// ClearPolicy implements the persist.Dispatcher interface.
+func (h *HRaftDispatcher) ClearPolicy() error {
+	return h.httpService.DoClearPolicyRequest()
+}
+
+// UpdatePolicy implements the persist.Dispatcher interface.
+func (h *HRaftDispatcher) UpdatePolicy(sec string, pType string, oldRule, newRule []string) error {
+	request := &command.UpdatePolicyRequest{
+		Sec:     sec,
+		PType:   pType,
+		OldRule: oldRule,
+		NewRule: newRule,
+	}
+	return h.httpService.DoUpdatePolicyRequest(request)
 }
