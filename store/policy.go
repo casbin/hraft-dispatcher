@@ -24,15 +24,16 @@ const (
 
 var (
 	policyBucketName = []byte("policy_rules")
+	// ShouldPersist always return false, no need to persistent the policy in casbin.
+	ShouldPersist = func() bool { return false }
 )
 
 // PolicyOperator is used to update policies and provide persistence.
 type PolicyOperator struct {
-	enforcer      casbin.IDistributedEnforcer
-	shouldPersist func() bool
-	db            *bolt.DB
-	l             *sync.Mutex
-	logger        *zap.Logger
+	enforcer casbin.IDistributedEnforcer
+	db       *bolt.DB
+	l        *sync.Mutex
+	logger   *zap.Logger
 }
 
 // NewPolicyOperator returns a PolicyOperator.
@@ -153,7 +154,7 @@ func (p *PolicyOperator) LoadPolicy() error {
 	p.l.Lock()
 	defer p.l.Unlock()
 
-	err := p.enforcer.ClearPolicySelf(p.shouldPersist)
+	err := p.enforcer.ClearPolicySelf(ShouldPersist)
 	if err != nil {
 		p.logger.Error("failed to call loadPolicy", zap.Error(err))
 		return err
@@ -168,7 +169,7 @@ func (p *PolicyOperator) LoadPolicy() error {
 				return err
 			}
 
-			_, err = p.enforcer.AddPolicySelf(p.shouldPersist, rule.Sec, rule.PType, [][]string{rule.Rule})
+			_, err = p.enforcer.AddPolicySelf(ShouldPersist, rule.Sec, rule.PType, [][]string{rule.Rule})
 			return err
 		})
 		return err
@@ -185,7 +186,7 @@ func (p *PolicyOperator) AddPolicy(sec, pType string, rules [][]string) error {
 	p.l.Lock()
 	defer p.l.Unlock()
 
-	effected, err := p.enforcer.AddPolicySelf(p.shouldPersist, sec, pType, rules)
+	effected, err := p.enforcer.AddPolicySelf(ShouldPersist, sec, pType, rules)
 	if err != nil {
 		return err
 	}
@@ -225,7 +226,7 @@ func (p *PolicyOperator) RemovePolicy(sec, pType string, rules [][]string) error
 	p.l.Lock()
 	defer p.l.Unlock()
 
-	effected, err := p.enforcer.RemovePolicySelf(p.shouldPersist, sec, pType, rules)
+	effected, err := p.enforcer.RemovePolicySelf(ShouldPersist, sec, pType, rules)
 	if err != nil {
 		p.logger.Error("failed to call RemovePolicySelf", zap.Error(err))
 		return err
@@ -258,7 +259,7 @@ func (p *PolicyOperator) RemoveFilteredPolicy(sec string, pType string, fieldInd
 	p.l.Lock()
 	defer p.l.Unlock()
 
-	effected, err := p.enforcer.RemoveFilteredPolicySelf(p.shouldPersist, sec, pType, fieldIndex, fieldValues...)
+	effected, err := p.enforcer.RemoveFilteredPolicySelf(ShouldPersist, sec, pType, fieldIndex, fieldValues...)
 	if err != nil {
 		p.logger.Error("failed to call RemoveFilteredPolicySelf", zap.Error(err))
 		return err
@@ -294,7 +295,7 @@ func (p *PolicyOperator) UpdatePolicy(sec, pType string, oldRule, newRule []stri
 	p.l.Lock()
 	defer p.l.Unlock()
 
-	effected, err := p.enforcer.UpdatePolicySelf(p.shouldPersist, sec, pType, oldRule, newRule)
+	effected, err := p.enforcer.UpdatePolicySelf(ShouldPersist, sec, pType, oldRule, newRule)
 	if err != nil {
 		p.logger.Error("failed to call UpdatePolicySelf", zap.Error(err))
 		return err
@@ -338,7 +339,7 @@ func (p *PolicyOperator) ClearPolicy() error {
 	p.l.Lock()
 	defer p.l.Unlock()
 
-	err := p.enforcer.ClearPolicySelf(p.shouldPersist)
+	err := p.enforcer.ClearPolicySelf(ShouldPersist)
 	if err != nil {
 		p.logger.Error("failed to call ClearPolicySelf", zap.Error(err))
 		return err
