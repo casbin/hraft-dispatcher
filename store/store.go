@@ -140,7 +140,7 @@ func (s *Store) Start(enableBootstrap bool) error {
 		}
 
 		f := ra.BootstrapCluster(configuration)
-		if f.Error() != raft.ErrCantBootstrap {
+		if f.Error() != nil && f.Error() != raft.ErrCantBootstrap {
 			s.logger.Error("failed to boostrap cluster", zap.Error(f.Error()))
 			return f.Error()
 		}
