@@ -400,3 +400,77 @@ func (s *Service) DoUpdatePolicyRequest(request *command.UpdatePolicyRequest) er
 
 	return nil
 }
+
+func (s *Service) DoJoinNodeRequest(request *command.AddNodeRequest)  error {
+	b, err := jsoniter.Marshal(request)
+	if err != nil {
+		return err
+	}
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/nodes/join", s.Addr()), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
+}
+
+func (s *Service) DoRemoveNodeRequest(request *command.RemoveNodeRequest)  error {
+	b, err := jsoniter.Marshal(request)
+	if err != nil {
+		return err
+	}
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/nodes/remove", s.Addr()), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
+}
+
+func DoJoinNodeRequest(clusterAddress string, nodeID string, nodeAddress string, tlsConfig *tls.Config) error {
+	tr := &http2.Transport{
+		TLSClientConfig: tlsConfig,
+	}
+	client := http.Client{Transport: tr}
+
+	data := &command.AddNodeRequest{
+		Address: nodeAddress,
+		Id:      nodeID,
+	}
+
+	b, err := jsoniter.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/nodes/join", clusterAddress), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
+}

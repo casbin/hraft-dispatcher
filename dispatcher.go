@@ -1,7 +1,10 @@
 package hraftdispatcher
 
 import (
+	"context"
 	"crypto/tls"
+
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/hashicorp/raft"
@@ -19,11 +22,17 @@ type HRaftDispatcher struct {
 	store       http.Store
 	tlsConfig   *tls.Config
 	httpService *http.Service
-	logger      *zap.Logger
+	shutdownFn  func() error
+
+	logger *zap.Logger
 }
 
 // NewHRaftDispatcher returns a HRaftDispatcher.
-func NewHRaftDispatcher(config Config) (*HRaftDispatcher, error) {
+func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
+	if config == nil {
+		return nil, errors.New("config is not provided")
+	}
+
 	if config.Enforcer == nil {
 		return nil, errors.New("Enforcer is not provided in config")
 	}
@@ -57,9 +66,8 @@ func NewHRaftDispatcher(config Config) (*HRaftDispatcher, error) {
 	}
 
 	storeConfig := &store.Config{
-		ID:      config.ServerID,
-		Address: config.RaftListenAddress,
-		Dir:     config.DataDir,
+		ID:  config.ServerID,
+		Dir: config.DataDir,
 		NetworkTransportConfig: &raft.NetworkTransportConfig{
 			Stream:  streamLayer,
 			MaxPool: 5,
@@ -86,6 +94,8 @@ func NewHRaftDispatcher(config Config) (*HRaftDispatcher, error) {
 
 	if enableBootstrap {
 		logger.Info("bootstrapping a new cluster")
+	} else {
+		logger.Info("skip bootstrapping a new cluster")
 	}
 
 	err = s.Start(enableBootstrap)
@@ -94,10 +104,17 @@ func NewHRaftDispatcher(config Config) (*HRaftDispatcher, error) {
 		return nil, err
 	}
 
-	if isNewCluster && config.JoinAddress != config.RaftListenAddress && len(config.JoinAddress) != 0 {
-		err = s.JoinNode(config.ServerID, config.RaftListenAddress)
+	if enableBootstrap {
+		err = s.WaitLeader()
 		if err != nil {
-			logger.Error("failed to join the current node to existing cluster", zap.Error(err))
+			logger.Error(err.Error())
+		}
+	}
+
+	if isNewCluster && config.JoinAddress != config.RaftListenAddress && len(config.JoinAddress) != 0 {
+		err = http.DoJoinNodeRequest(config.JoinAddress, config.ServerID, config.RaftListenAddress, config.TLSConfig)
+		if err != nil {
+			logger.Error("failed to join the current node to existing cluster", zap.String("nodeID", config.ServerID), zap.String("nodeAddress", config.RaftListenAddress), zap.String("clusterAddress", config.JoinAddress), zap.Error(err))
 			return nil, err
 		}
 	}
@@ -112,12 +129,27 @@ func NewHRaftDispatcher(config Config) (*HRaftDispatcher, error) {
 		return nil, err
 	}
 
-	return &HRaftDispatcher{
+	h := &HRaftDispatcher{
 		store:       s,
 		tlsConfig:   config.TLSConfig,
 		httpService: httpService,
 		logger:      logger,
-	}, nil
+	}
+
+	h.shutdownFn = func() error {
+		var ret error
+		err := s.Stop()
+		if err != nil {
+			ret = multierror.Append(ret, err)
+		}
+		err = httpService.Stop(context.Background())
+		if err != nil {
+			ret = multierror.Append(ret, err)
+		}
+		return ret
+	}
+
+	return h, nil
 }
 
 //AddPolicies implements the persist.Dispatcher interface.
@@ -176,4 +208,26 @@ func (h *HRaftDispatcher) UpdatePolicy(sec string, pType string, oldRule, newRul
 		NewRule: newRule,
 	}
 	return h.httpService.DoUpdatePolicyRequest(request)
+}
+
+// JoinNode joins a node to the current cluster.
+func (h *HRaftDispatcher) JoinNode(serverID, serverAddress string) error {
+	request := &command.AddNodeRequest{
+		Id:      serverID,
+		Address: serverAddress,
+	}
+	return h.httpService.DoJoinNodeRequest(request)
+}
+
+// JoinNode joins a node from the current cluster.
+func (h *HRaftDispatcher) RemoveNode(serverID string) error {
+	request := &command.RemoveNodeRequest{
+		Id: serverID,
+	}
+	return h.httpService.DoRemoveNodeRequest(request)
+}
+
+// Shutdown is used to close the http and raft service.
+func (h *HRaftDispatcher) Shutdown() error {
+	return h.shutdownFn()
 }

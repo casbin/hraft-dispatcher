@@ -1,6 +1,9 @@
 package store
 
 import (
+	"context"
+	"github.com/cenkalti/backoff/v4"
+	"github.com/pkg/errors"
 	"os"
 	"path"
 	"path/filepath"
@@ -53,7 +56,6 @@ type Store struct {
 
 type Config struct {
 	ID                     string
-	Address                string
 	Dir                    string
 	NetworkTransportConfig *raft.NetworkTransportConfig
 	Enforcer               casbin.IDistributedEnforcer
@@ -64,7 +66,6 @@ func NewStore(config *Config) (*Store, error) {
 	s := &Store{
 		raftDir:                config.Dir,
 		serverID:               config.ID,
-		serverAddress:          config.Address,
 		logger:                 zap.NewExample(),
 		networkTransportConfig: config.NetworkTransportConfig,
 		enforcer:               config.Enforcer,
@@ -177,6 +178,36 @@ func (s *Store) IsInitializedCluster() bool {
 		}
 	}
 	return true
+}
+
+// WaitLeader detects the leader address in the current cluster.
+func (s *Store) WaitLeader() error {
+	ticker := backoff.NewTicker(backoff.NewExponentialBackOff())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
+			return errors.New("failed to detect the current leader")
+		case <-ticker.C:
+			if s.raft.Leader() != "" {
+				ticker.Stop()
+				return nil
+			}
+		}
+	}
+}
+
+// Address returns the address of the current node.
+func (s *Store) Address()  string {
+	return s.networkTransportConfig.Stream.Addr().String()
+}
+
+// ID returns the id of the current node.
+func (s *Store) ID() string {
+	return s.serverID
 }
 
 // applyProtoMessage applies a proto message.

@@ -16,10 +16,13 @@ type Config struct {
 	// DataDir holds raft data.
 	DataDir string
 	// HttpListenAddress is a network address for http service.
+	// example: 10.0.10.10:6780
 	HttpListenAddress string
 	// RaftListenAddress is a network address for raft server.
-	// example: 10.0.10.10
+	// example: 10.0.10.10:6790
 	RaftListenAddress string
 	// TLSConfig is used to configure a TLS server and client.
+	// You have to provide a peer certificate.
+	// We recommend using cfssl tool to create this certificates.
 	TLSConfig *tls.Config
 }
