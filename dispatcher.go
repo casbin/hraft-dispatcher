@@ -3,7 +3,6 @@ package hraftdispatcher
 import (
 	"context"
 	"crypto/tls"
-
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/casbin/casbin/v2/persist"
@@ -45,12 +44,13 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 		return nil, errors.New("RaftListenAddress is not provided in config")
 	}
 
-	if len(config.HttpListenAddress) == 0 {
-		return nil, errors.New("HttpListenAddress is not provided in config")
-	}
-
 	if config.TLSConfig == nil {
 		return nil, errors.New("TLSConfig is not provided in config")
+	}
+
+	httpListenAddress, err := http.ConvertRaftAddressToHTTPAddress(config.RaftListenAddress)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(config.ServerID) == 0 {
@@ -112,14 +112,19 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 	}
 
 	if isNewCluster && config.JoinAddress != config.RaftListenAddress && len(config.JoinAddress) != 0 {
-		err = http.DoJoinNodeRequest(config.JoinAddress, config.ServerID, config.RaftListenAddress, config.TLSConfig)
+		entryAddress, err := http.ConvertRaftAddressToHTTPAddress(config.JoinAddress)
+		if err != nil {
+			logger.Error("failed to convert the Raft address to HTTP address", zap.String("nodeID", config.ServerID), zap.String("nodeAddress", config.RaftListenAddress), zap.String("clusterAddress", config.JoinAddress), zap.Error(err))
+			return nil, err
+		}
+		err = http.DoJoinNodeRequest(entryAddress, config.ServerID, config.RaftListenAddress, config.TLSConfig)
 		if err != nil {
 			logger.Error("failed to join the current node to existing cluster", zap.String("nodeID", config.ServerID), zap.String("nodeAddress", config.RaftListenAddress), zap.String("clusterAddress", config.JoinAddress), zap.Error(err))
 			return nil, err
 		}
 	}
 
-	httpService, err := http.NewService(config.HttpListenAddress, config.TLSConfig, s)
+	httpService, err := http.NewService(httpListenAddress, config.TLSConfig, s)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +165,7 @@ func (h *HRaftDispatcher) AddPolicies(sec string, pType string, rules [][]string
 		items = append(items, item)
 	}
 
-	addPolicyRequest := &command.AddPolicyRequest{
+	addPolicyRequest := &command.AddPoliciesRequest{
 		Sec:   sec,
 		PType: pType,
 		Rules: items,
@@ -176,7 +181,7 @@ func (h *HRaftDispatcher) RemovePolicies(sec string, pType string, rules [][]str
 		items = append(items, item)
 	}
 
-	request := &command.RemovePolicyRequest{
+	request := &command.RemovePoliciesRequest{
 		Sec:   sec,
 		PType: pType,
 		Rules: items,
@@ -187,9 +192,10 @@ func (h *HRaftDispatcher) RemovePolicies(sec string, pType string, rules [][]str
 // RemoveFilteredPolicy implements the persist.Dispatcher interface.
 func (h *HRaftDispatcher) RemoveFilteredPolicy(sec string, pType string, fieldIndex int, fieldValues ...string) error {
 	request := &command.RemoveFilteredPolicyRequest{
-		Sec:        sec,
-		PType:      pType,
-		FieldIndex: int32(fieldIndex),
+		Sec:         sec,
+		PType:       pType,
+		FieldIndex:  int32(fieldIndex),
+		FieldValues: fieldValues,
 	}
 	return h.httpService.DoRemoveFilteredPolicyRequest(request)
 }
@@ -208,6 +214,29 @@ func (h *HRaftDispatcher) UpdatePolicy(sec string, pType string, oldRule, newRul
 		NewRule: newRule,
 	}
 	return h.httpService.DoUpdatePolicyRequest(request)
+}
+
+// UpdatePolicies implements the persist.Dispatcher interface.
+func (h *HRaftDispatcher) UpdatePolicies(sec string, pType string, oldRules, newRules [][]string) error {
+	var olds []*command.StringArray
+	for _, rule := range oldRules {
+		var item = &command.StringArray{Items: rule}
+		olds = append(olds, item)
+	}
+
+	var news []*command.StringArray
+	for _, rule := range newRules {
+		var item = &command.StringArray{Items: rule}
+		news = append(news, item)
+	}
+
+	request := &command.UpdatePoliciesRequest{
+		Sec:      sec,
+		PType:    pType,
+		OldRules: olds,
+		NewRules: news,
+	}
+	return h.httpService.DoUpdatePoliciesRequest(request)
 }
 
 // JoinNode joins a node to the current cluster.

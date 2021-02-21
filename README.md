@@ -2,11 +2,6 @@
 
 A dispatcher based on Hashicorp's Raft for Casbin.
 
-**In the development**
-
-- Add integration tests for dispatcher
-
-
-## Contribution
+### Contribution
 
 You are welcome to contribute any code.

@@ -8,13 +8,13 @@ message StringArray {
   repeated string items = 1;
 }
 
-message AddPolicyRequest {
+message AddPoliciesRequest {
   string sec = 1;
   string pType = 2;
   repeated StringArray rules = 3;
 }
 
-message RemovePolicyRequest {
+message RemovePoliciesRequest {
   string sec = 1;
   string pType = 2;
   repeated StringArray rules = 3;
@@ -34,13 +34,22 @@ message UpdatePolicyRequest {
   repeated string oldRule = 4;
 }
 
+message UpdatePoliciesRequest {
+  string sec = 1;
+  string pType = 2;
+  repeated StringArray newRules = 3;
+  repeated StringArray oldRules = 4;
+}
+
 message Command {
   enum Type {
-    COMMAND_TYPE_ADD = 0;
-    COMMAND_TYPE_REMOVE = 1;
-    COMMAND_TYPE_REMOVE_FILTERED = 2;
-    COMMAND_TYPE_UPDATE = 4;
-    COMMAND_TYPE_CLEAR = 3;
+    COMMAND_TYPE_ADD_POLICIES = 0;
+    COMMAND_TYPE_REMOVE_POLICIES = 1;
+    COMMAND_TYPE_REMOVE_FILTERED_POLICY = 2;
+    COMMAND_TYPE_UPDATE_POLICY = 3;
+    COMMAND_TYPE_UPDATE_POLICIES = 4;
+
+    COMMAND_TYPE_CLEAR_POLICY = 5;
   }
 
   Type type = 1;
@@ -48,8 +57,8 @@ message Command {
 }
 
 message AddNodeRequest {
-  string address = 1;
-  string id = 2;
+  string id = 1;
+  string address = 2;
 }
 
 message RemoveNodeRequest {

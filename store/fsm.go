@@ -42,8 +42,8 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		return err
 	}
 	switch cmd.Type {
-	case command.Command_COMMAND_TYPE_ADD:
-		var request command.AddPolicyRequest
+	case command.Command_COMMAND_TYPE_ADD_POLICIES:
+		var request command.AddPoliciesRequest
 		err := proto.Unmarshal(cmd.Data, &request)
 		if err != nil {
 			f.logger.Error("cannot to unmarshal the request", zap.Error(err), zap.ByteString("request", cmd.Data))
@@ -53,13 +53,13 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		for _, rule := range request.Rules {
 			rules = append(rules, rule.GetItems())
 		}
-		err = f.policyOperator.AddPolicy(request.Sec, request.PType, rules)
+		err = f.policyOperator.AddPolicies(request.Sec, request.PType, rules)
 		if err != nil {
-			f.logger.Error("apply the add policy request failed", zap.Error(err), zap.String("request", request.String()))
+			f.logger.Error("apply the add policies request failed", zap.Error(err), zap.String("request", request.String()))
 		}
 		return err
-	case command.Command_COMMAND_TYPE_REMOVE:
-		var request command.RemovePolicyRequest
+	case command.Command_COMMAND_TYPE_REMOVE_POLICIES:
+		var request command.RemovePoliciesRequest
 		err := proto.Unmarshal(cmd.Data, &request)
 		if err != nil {
 			f.logger.Error("cannot to unmarshal the request", zap.Error(err), zap.ByteString("request", cmd.Data))
@@ -69,12 +69,12 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		for _, rule := range request.Rules {
 			rules = append(rules, rule.GetItems())
 		}
-		err = f.policyOperator.RemovePolicy(request.Sec, request.PType, rules)
+		err = f.policyOperator.RemovePolicies(request.Sec, request.PType, rules)
 		if err != nil {
-			f.logger.Error("apply the remove policy request failed", zap.Error(err), zap.String("request", request.String()))
+			f.logger.Error("apply the remove policies request failed", zap.Error(err), zap.String("request", request.String()))
 		}
 		return err
-	case command.Command_COMMAND_TYPE_REMOVE_FILTERED:
+	case command.Command_COMMAND_TYPE_REMOVE_FILTERED_POLICY:
 		var request command.RemoveFilteredPolicyRequest
 		err := proto.Unmarshal(cmd.Data, &request)
 		if err != nil {
@@ -86,7 +86,7 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 			f.logger.Error("apply the remove filtered policy request failed", zap.Error(err), zap.String("request", request.String()))
 		}
 		return err
-	case command.Command_COMMAND_TYPE_UPDATE:
+	case command.Command_COMMAND_TYPE_UPDATE_POLICY:
 		var request command.UpdatePolicyRequest
 		err := proto.Unmarshal(cmd.Data, &request)
 		if err != nil {
@@ -98,7 +98,28 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 			f.logger.Error("apply the update policy request failed", zap.Error(err), zap.String("request", request.String()))
 		}
 		return err
-	case command.Command_COMMAND_TYPE_CLEAR:
+	case command.Command_COMMAND_TYPE_UPDATE_POLICIES:
+		var request command.UpdatePoliciesRequest
+		err := proto.Unmarshal(cmd.Data, &request)
+		if err != nil {
+			f.logger.Error("cannot to unmarshal the request", zap.Error(err), zap.ByteString("request", cmd.Data))
+			return err
+		}
+		var oldRules [][]string
+		for _, rule := range request.OldRules {
+			oldRules = append(oldRules, rule.GetItems())
+		}
+		var newRules [][]string
+		for _, rule := range request.NewRules {
+			newRules = append(newRules, rule.GetItems())
+		}
+
+		err = f.policyOperator.UpdatePolicies(request.Sec, request.PType, oldRules, newRules)
+		if err != nil {
+			f.logger.Error("apply the update policies request failed", zap.Error(err), zap.String("request", request.String()))
+		}
+		return err
+	case command.Command_COMMAND_TYPE_CLEAR_POLICY:
 		err := f.policyOperator.ClearPolicy()
 		if err != nil {
 			f.logger.Error("apply the clear policy request failed", zap.Error(err))
@@ -115,6 +136,7 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 // concurrently with any other command. The FSM must discard all previous
 // state.
 func (f *FSM) Restore(rc io.ReadCloser) error {
+	f.logger.Info("start restore")
 	err := f.policyOperator.Restore(rc)
 	if err != nil {
 		f.logger.Error("failed to restore an FSM from a snapshot", zap.Error(err))

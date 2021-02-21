@@ -188,6 +188,21 @@ func (mr *MockIDistributedEnforcerMockRecorder) AddPolicies(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddPolicies), arg0)
 }
 
+// AddPoliciesSelf mocks base method
+func (m *MockIDistributedEnforcer) AddPoliciesSelf(arg0 func() bool, arg1, arg2 string, arg3 [][]string) ([][]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddPoliciesSelf", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([][]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddPoliciesSelf indicates an expected call of AddPoliciesSelf
+func (mr *MockIDistributedEnforcerMockRecorder) AddPoliciesSelf(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPoliciesSelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddPoliciesSelf), arg0, arg1, arg2, arg3)
+}
+
 // AddPolicy mocks base method
 func (m *MockIDistributedEnforcer) AddPolicy(arg0 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
@@ -205,21 +220,6 @@ func (m *MockIDistributedEnforcer) AddPolicy(arg0 ...interface{}) (bool, error) 
 func (mr *MockIDistributedEnforcerMockRecorder) AddPolicy(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddPolicy), arg0...)
-}
-
-// AddPolicySelf mocks base method
-func (m *MockIDistributedEnforcer) AddPolicySelf(arg0 func() bool, arg1, arg2 string, arg3 [][]string) ([][]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPolicySelf", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].([][]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AddPolicySelf indicates an expected call of AddPolicySelf
-func (mr *MockIDistributedEnforcerMockRecorder) AddPolicySelf(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPolicySelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddPolicySelf), arg0, arg1, arg2, arg3)
 }
 
 // AddRoleForUser mocks base method
@@ -1466,6 +1466,21 @@ func (mr *MockIDistributedEnforcerMockRecorder) RemovePolicies(arg0 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemovePolicies), arg0)
 }
 
+// RemovePoliciesSelf mocks base method
+func (m *MockIDistributedEnforcer) RemovePoliciesSelf(arg0 func() bool, arg1, arg2 string, arg3 [][]string) ([][]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemovePoliciesSelf", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([][]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemovePoliciesSelf indicates an expected call of RemovePoliciesSelf
+func (mr *MockIDistributedEnforcerMockRecorder) RemovePoliciesSelf(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePoliciesSelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemovePoliciesSelf), arg0, arg1, arg2, arg3)
+}
+
 // RemovePolicy mocks base method
 func (m *MockIDistributedEnforcer) RemovePolicy(arg0 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
@@ -1483,21 +1498,6 @@ func (m *MockIDistributedEnforcer) RemovePolicy(arg0 ...interface{}) (bool, erro
 func (mr *MockIDistributedEnforcerMockRecorder) RemovePolicy(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemovePolicy), arg0...)
-}
-
-// RemovePolicySelf mocks base method
-func (m *MockIDistributedEnforcer) RemovePolicySelf(arg0 func() bool, arg1, arg2 string, arg3 [][]string) ([][]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemovePolicySelf", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].([][]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RemovePolicySelf indicates an expected call of RemovePolicySelf
-func (mr *MockIDistributedEnforcerMockRecorder) RemovePolicySelf(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicySelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemovePolicySelf), arg0, arg1, arg2, arg3)
 }
 
 // SavePolicy mocks base method
@@ -1586,6 +1586,51 @@ func (m *MockIDistributedEnforcer) SetWatcher(arg0 persist.Watcher) error {
 func (mr *MockIDistributedEnforcerMockRecorder) SetWatcher(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetWatcher", reflect.TypeOf((*MockIDistributedEnforcer)(nil).SetWatcher), arg0)
+}
+
+// UpdatePolicies mocks base method
+func (m *MockIDistributedEnforcer) UpdatePolicies(arg0, arg1 [][]string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePolicies", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePolicies indicates an expected call of UpdatePolicies
+func (mr *MockIDistributedEnforcerMockRecorder) UpdatePolicies(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdatePolicies), arg0, arg1)
+}
+
+// UpdatePoliciesSelf mocks base method
+func (m *MockIDistributedEnforcer) UpdatePoliciesSelf(arg0 func() bool, arg1, arg2 string, arg3, arg4 [][]string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePoliciesSelf", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePoliciesSelf indicates an expected call of UpdatePoliciesSelf
+func (mr *MockIDistributedEnforcerMockRecorder) UpdatePoliciesSelf(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePoliciesSelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdatePoliciesSelf), arg0, arg1, arg2, arg3, arg4)
+}
+
+// UpdatePolicy mocks base method
+func (m *MockIDistributedEnforcer) UpdatePolicy(arg0, arg1 []string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePolicy", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePolicy indicates an expected call of UpdatePolicy
+func (mr *MockIDistributedEnforcerMockRecorder) UpdatePolicy(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdatePolicy), arg0, arg1)
 }
 
 // UpdatePolicySelf mocks base method

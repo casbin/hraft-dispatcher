@@ -56,7 +56,7 @@ func TestLeader(t *testing.T) {
 	store.EXPECT().Leader().Return(false, "127.0.0.1:6790")
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, httptest.NewRequest(http.MethodPut, "https://testing", nil))
-	assert.Equal(t, w.Header().Get("Location"), "https://127.0.0.1:6790")
+	assert.Equal(t, w.Header().Get("Location"), "https://127.0.0.1:6791")
 	assert.Equal(t, w.Code, http.StatusTemporaryRedirect)
 }
 
@@ -78,13 +78,13 @@ func TestAddPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer s.Stop(context.Background())
 
-	addPolicyRequest := &command.AddPolicyRequest{
+	addPolicyRequest := &command.AddPoliciesRequest{
 		Sec:   "p",
 		PType: "p",
 		Rules: []*command.StringArray{{Items: []string{"role:admin", "/", "*"}}},
 	}
 	store.EXPECT().Leader().Return(true, s.Addr())
-	store.EXPECT().AddPolicy(addPolicyRequest).Return(nil)
+	store.EXPECT().AddPolicies(addPolicyRequest).Return(nil)
 
 	b, err := jsoniter.Marshal(addPolicyRequest)
 	assert.NoError(t, err)
@@ -115,13 +115,13 @@ func TestRemovePolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer s.Stop(context.Background())
 
-	removePolicyRequest := &command.RemovePolicyRequest{
+	removePolicyRequest := &command.RemovePoliciesRequest{
 		Sec:   "p",
 		PType: "p",
 		Rules: []*command.StringArray{{Items: []string{"role:admin", "/", "*"}}},
 	}
 	store.EXPECT().Leader().Return(true, s.Addr())
-	store.EXPECT().RemovePolicy(removePolicyRequest).Return(nil)
+	store.EXPECT().RemovePolicies(removePolicyRequest).Return(nil)
 
 	b, err := jsoniter.Marshal(removePolicyRequest)
 	assert.NoError(t, err)

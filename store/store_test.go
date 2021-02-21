@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/casbin/casbin/v2"
+
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/raft"
 	"github.com/nodece/casbin-hraft-dispatcher/command"
 	"github.com/nodece/casbin-hraft-dispatcher/store/mocks"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,23 +45,317 @@ func GetTLSConfig() (*tls.Config, error) {
 	return config, nil
 }
 
-func TestStore(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Store Suite")
+func TestStore_SingleNode(t *testing.T) {
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	enforcer := mocks.NewMockIDistributedEnforcer(ctl)
+	raftID := "node-leader"
+
+	raftAddress := GetLocalIP() + ":6790"
+
+	store, err := newStore(enforcer, raftID, raftAddress, true)
+	assert.NoError(t, err)
+	defer store.Stop()
+	defer os.RemoveAll(store.DataDir())
+
+	err = store.WaitLeader()
+	assert.NoError(t, err)
+
+	Convey("TestStore_SingleNode", t, func() {
+		Convey("AddPolicy()", func() {
+			sec := "p"
+			pType := "p"
+			originalRules := [][]string{{"role:admin", "/", "*"}}
+			var rules []*command.StringArray
+			for _, rule := range originalRules {
+				rules = append(rules, &command.StringArray{Items: rule})
+			}
+
+			request := &command.AddPoliciesRequest{
+				Sec:   sec,
+				PType: pType,
+				Rules: rules,
+			}
+
+			enforcer.EXPECT().AddPoliciesSelf(nil, sec, pType, originalRules).Return(originalRules, nil)
+			err := store.AddPolicies(request)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("RemovePolicy()", func() {
+			sec := "p"
+			pType := "p"
+			originalRules := [][]string{{"role:admin", "/", "*"}}
+			var rules []*command.StringArray
+			for _, rule := range originalRules {
+				rules = append(rules, &command.StringArray{Items: rule})
+			}
+
+			request := &command.RemovePoliciesRequest{
+				Sec:   sec,
+				PType: pType,
+				Rules: rules,
+			}
+
+			enforcer.EXPECT().RemovePoliciesSelf(nil, sec, pType, originalRules).Return(originalRules, nil)
+			err := store.RemovePolicies(request)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("RemoveFilteredPolicy()", func() {
+			sec := "p"
+			pType := "p"
+			fieldIndex := 0
+			fieldValues := []string{"role:admin"}
+			effected := [][]string{{"role:admin", "/", "*"}}
+
+			request := &command.RemoveFilteredPolicyRequest{
+				Sec:         sec,
+				PType:       pType,
+				FieldIndex:  int32(fieldIndex),
+				FieldValues: fieldValues,
+			}
+
+			enforcer.EXPECT().RemoveFilteredPolicySelf(nil, sec, pType, fieldIndex, fieldValues).Return(effected, nil)
+			err := store.RemoveFilteredPolicy(request)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("UpdatePolicy()", func() {
+			sec := "p"
+			pType := "p"
+			oldRule := []string{"role:admin", "/", "*"}
+			newRule := []string{"role:admin", "/admin", "*"}
+
+			request := &command.UpdatePolicyRequest{
+				Sec:     sec,
+				PType:   pType,
+				OldRule: oldRule,
+				NewRule: newRule,
+			}
+
+			enforcer.EXPECT().UpdatePolicySelf(nil, sec, pType, oldRule, newRule).Return(true, nil)
+			err := store.UpdatePolicy(request)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("ClearPolicy()", func() {
+			enforcer.EXPECT().ClearPolicySelf(nil).Return(nil)
+			err := store.ClearPolicy()
+			So(err, ShouldBeNil)
+		})
+
+		Convey("ID()", func() {
+			assert.Equal(t, raftID, store.ID())
+			So(store.ID(), ShouldEqual, raftID)
+		})
+
+		Convey("Address()", func() {
+			So(store.Address(), ShouldEqual, raftAddress)
+		})
+
+		Convey("Leader()", func() {
+			isLeader, leaderAddress := store.Leader()
+
+			So(isLeader, ShouldBeTrue)
+			So(leaderAddress, ShouldEqual, raftAddress)
+		})
+
+		Convey("IsInitializedCluster()", func() {
+			ok := store.IsInitializedCluster()
+			So(ok, ShouldBeTrue)
+		})
+	})
 }
 
-func newStore(id string, address string, enableBootstrap bool) (*gomock.Controller, *mocks.MockIDistributedEnforcer, *Store, string) {
-	ctl := gomock.NewController(GinkgoT())
-	enforcer := mocks.NewMockIDistributedEnforcer(ctl)
+func TestStore_MultipleNode(t *testing.T) {
+	// mock leader enforcer
+	leaderCtl := gomock.NewController(t)
+	defer leaderCtl.Finish()
+	leaderEnforcer := mocks.NewMockIDistributedEnforcer(leaderCtl)
 
+	// mock follower
+	followerCtl := gomock.NewController(t)
+	defer followerCtl.Finish()
+	followerEnforcer := mocks.NewMockIDistributedEnforcer(followerCtl)
+
+	localIP := GetLocalIP()
+	leaderAddress := localIP + ":6790"
+	followerAddress := localIP + ":6780"
+
+	leaderID := "node-leader"
+	followerID := "node-follower"
+
+	leaderStore, err := newStore(leaderEnforcer, leaderID, leaderAddress, true)
+	assert.NoError(t, err)
+
+	err = leaderStore.WaitLeader()
+	assert.NoError(t, err)
+
+	followerStore, err := newStore(followerEnforcer, followerID, followerAddress, false)
+	assert.NoError(t, err)
+
+	err = leaderStore.JoinNode(followerStore.ID(), followerStore.Address())
+	assert.NoError(t, err)
+
+	err = followerStore.WaitLeader()
+	assert.NoError(t, err)
+
+	Convey("TestStore_MultipleNode", t, func() {
+		Convey("AddPolicy()", func() {
+			sec := "p"
+			pType := "p"
+			originalRules := [][]string{{"role:admin", "/", "*"}}
+			var rules []*command.StringArray
+			for _, rule := range originalRules {
+				rules = append(rules, &command.StringArray{Items: rule})
+			}
+
+			request := &command.AddPoliciesRequest{
+				Sec:   sec,
+				PType: pType,
+				Rules: rules,
+			}
+
+			leaderEnforcer.EXPECT().AddPoliciesSelf(nil, sec, pType, originalRules).Return(originalRules, nil)
+			followerEnforcer.EXPECT().AddPoliciesSelf(nil, sec, pType, originalRules).Return(originalRules, nil)
+			err := leaderStore.AddPolicies(request)
+			So(err, ShouldBeNil)
+
+			// Waiting for synchronization data to follow node.
+			<-time.After(2 * time.Second)
+		})
+
+		Convey("RemovePolicy()", func() {
+			sec := "p"
+			pType := "p"
+			originalRules := [][]string{{"role:admin", "/", "*"}}
+			var rules []*command.StringArray
+			for _, rule := range originalRules {
+				rules = append(rules, &command.StringArray{Items: rule})
+			}
+
+			request := &command.RemovePoliciesRequest{
+				Sec:   sec,
+				PType: pType,
+				Rules: rules,
+			}
+
+			leaderEnforcer.EXPECT().RemovePoliciesSelf(nil, sec, pType, originalRules).Return(originalRules, nil)
+			followerEnforcer.EXPECT().RemovePoliciesSelf(nil, sec, pType, originalRules).Return(originalRules, nil)
+			err := leaderStore.RemovePolicies(request)
+			So(err, ShouldBeNil)
+
+			// Waiting for synchronization data to follow node.
+			<-time.After(2 * time.Second)
+		})
+
+		Convey("RemoveFilteredPolicy()", func() {
+			sec := "p"
+			pType := "p"
+			fieldIndex := 0
+			fieldValues := []string{"role:admin"}
+			effected := [][]string{{"role:admin", "/", "*"}}
+
+			request := &command.RemoveFilteredPolicyRequest{
+				Sec:         sec,
+				PType:       pType,
+				FieldIndex:  int32(fieldIndex),
+				FieldValues: fieldValues,
+			}
+
+			leaderEnforcer.EXPECT().RemoveFilteredPolicySelf(nil, sec, pType, fieldIndex, fieldValues).Return(effected, nil)
+			followerEnforcer.EXPECT().RemoveFilteredPolicySelf(nil, sec, pType, fieldIndex, fieldValues).Return(effected, nil)
+			err := leaderStore.RemoveFilteredPolicy(request)
+			So(err, ShouldBeNil)
+
+			// Waiting for synchronization data to follow node.
+			<-time.After(2 * time.Second)
+		})
+
+		Convey("UpdatePolicy()", func() {
+			sec := "p"
+			pType := "p"
+			oldRule := []string{"role:admin", "/", "*"}
+			newRule := []string{"role:admin", "/admin", "*"}
+
+			request := &command.UpdatePolicyRequest{
+				Sec:     sec,
+				PType:   pType,
+				OldRule: oldRule,
+				NewRule: newRule,
+			}
+
+			leaderEnforcer.EXPECT().UpdatePolicySelf(nil, sec, pType, oldRule, newRule).Return(true, nil)
+			followerEnforcer.EXPECT().UpdatePolicySelf(nil, sec, pType, oldRule, newRule).Return(true, nil)
+			err := leaderStore.UpdatePolicy(request)
+			So(err, ShouldBeNil)
+
+			// Waiting for synchronization data to follow node.
+			<-time.After(2 * time.Second)
+		})
+
+		Convey("ClearPolicy()", func() {
+			leaderEnforcer.EXPECT().ClearPolicySelf(nil).Return(nil)
+			followerEnforcer.EXPECT().ClearPolicySelf(nil).Return(nil)
+			err := leaderStore.ClearPolicy()
+			So(err, ShouldBeNil)
+
+			// Waiting for synchronization data to follow node.
+			<-time.After(2 * time.Second)
+		})
+
+		Convey("ID()", func() {
+			So(leaderStore.ID(), ShouldEqual, leaderID)
+			So(followerStore.ID(), ShouldEqual, followerID)
+		})
+
+		Convey("Address()", func() {
+			So(leaderStore.Address(), ShouldEqual, leaderAddress)
+			So(followerStore.Address(), ShouldEqual, followerAddress)
+		})
+
+		Convey("Leader()", func() {
+			isLeader, address := leaderStore.Leader()
+			So(isLeader, ShouldBeTrue)
+			So(address, ShouldEqual, leaderAddress)
+
+			isLeader, address = followerStore.Leader()
+			So(isLeader, ShouldBeFalse)
+			So(address, ShouldEqual, leaderAddress)
+		})
+
+		Convey("RemoveNode()", func() {
+			err := leaderStore.RemoveNode(followerAddress)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("IsInitializedCluster()", func() {
+			ok := leaderStore.IsInitializedCluster()
+			So(ok, ShouldBeTrue)
+
+			ok = followerStore.IsInitializedCluster()
+			So(ok, ShouldBeTrue)
+		})
+	})
+}
+
+func newStore(enforcer casbin.IDistributedEnforcer, id string, address string, enableBootstrap bool) (*Store, error) {
 	dir, err := ioutil.TempDir("", "casbin-hraft-")
-	assert.NoError(GinkgoT(), err)
+	if err != nil {
+		return nil, err
+	}
 
 	tlsConfig, err := GetTLSConfig()
-	assert.NoError(GinkgoT(), err)
+	if err != nil {
+		return nil, err
+	}
 
 	streamLayer, err := NewTCPStreamLayer(address, tlsConfig)
-	assert.NoError(GinkgoT(), err)
+	if err != nil {
+		return nil, err
+	}
 
 	store, err := NewStore(&Config{
 		ID:  id,
@@ -73,316 +368,14 @@ func newStore(id string, address string, enableBootstrap bool) (*gomock.Controll
 		},
 		Enforcer: enforcer,
 	})
-	assert.NoError(GinkgoT(), err)
+	if err != nil {
+		return nil, err
+	}
 
 	err = store.Start(enableBootstrap)
-	assert.NoError(GinkgoT(), err)
+	if err != nil {
+		return nil, err
+	}
 
-	return ctl, enforcer, store, dir
+	return store, nil
 }
-
-var _ = Describe("test store", func() {
-	Describe("SingleNode", func() {
-		var ctl *gomock.Controller
-		var enforcer *mocks.MockIDistributedEnforcer
-		var store *Store
-		var workDir string
-		var raftAddress string
-		raftID := "node-leader"
-
-		BeforeEach(func() {
-			localIP := GetLocalIP()
-			raftAddress = localIP + ":6791"
-
-			ctl, enforcer, store, workDir = newStore(raftID, raftAddress, true)
-			err := store.WaitLeader()
-			assert.NoError(GinkgoT(), err)
-		})
-
-		AfterEach(func() {
-			ctl.Finish()
-			store.Stop()
-			os.RemoveAll(workDir)
-		})
-
-		It("AddPolicy()", func() {
-			sec := "p"
-			pType := "p"
-			originalRules := [][]string{{"role:admin", "/", "*"}}
-			var rules []*command.StringArray
-			for _, rule := range originalRules {
-				rules = append(rules, &command.StringArray{Items: rule})
-			}
-
-			request := &command.AddPolicyRequest{
-				Sec:   sec,
-				PType: pType,
-				Rules: rules,
-			}
-
-			enforcer.EXPECT().AddPolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, originalRules).Return(originalRules, nil)
-			err := store.AddPolicy(request)
-			assert.NoError(GinkgoT(), err)
-		})
-
-		It("RemovePolicy()", func() {
-			sec := "p"
-			pType := "p"
-			originalRules := [][]string{{"role:admin", "/", "*"}}
-			var rules []*command.StringArray
-			for _, rule := range originalRules {
-				rules = append(rules, &command.StringArray{Items: rule})
-			}
-
-			request := &command.RemovePolicyRequest{
-				Sec:   sec,
-				PType: pType,
-				Rules: rules,
-			}
-
-			enforcer.EXPECT().RemovePolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, originalRules).Return(originalRules, nil)
-			err := store.RemovePolicy(request)
-			assert.NoError(GinkgoT(), err)
-		})
-
-		It("RemoveFilteredPolicy()", func() {
-			sec := "p"
-			pType := "p"
-			fieldIndex := 0
-			fieldValues := []string{"role:admin"}
-			effected := [][]string{{"role:admin", "/", "*"}}
-
-			request := &command.RemoveFilteredPolicyRequest{
-				Sec:         sec,
-				PType:       pType,
-				FieldIndex:  int32(fieldIndex),
-				FieldValues: fieldValues,
-			}
-
-			enforcer.EXPECT().RemoveFilteredPolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, fieldIndex, fieldValues).Return(effected, nil)
-			err := store.RemoveFilteredPolicy(request)
-			assert.NoError(GinkgoT(), err)
-		})
-
-		It("UpdatePolicy()", func() {
-			sec := "p"
-			pType := "p"
-			oldRule := []string{"role:admin", "/", "*"}
-			newRule := []string{"role:admin", "/admin", "*"}
-
-			request := &command.UpdatePolicyRequest{
-				Sec:     sec,
-				PType:   pType,
-				OldRule: oldRule,
-				NewRule: newRule,
-			}
-
-			enforcer.EXPECT().UpdatePolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, oldRule, newRule).Return(true, nil)
-			err := store.UpdatePolicy(request)
-			assert.NoError(GinkgoT(), err)
-		})
-
-		It("ClearPolicy()", func() {
-			enforcer.EXPECT().ClearPolicySelf(gomock.AssignableToTypeOf(ShouldPersist)).Return(nil)
-			err := store.ClearPolicy()
-			assert.NoError(GinkgoT(), err)
-		})
-
-		It("ID()", func() {
-			assert.Equal(GinkgoT(), raftID, store.ID())
-		})
-
-		It("Address()", func() {
-			assert.Equal(GinkgoT(), raftAddress, store.Address())
-		})
-
-		It("Leader()", func() {
-			isLeader, leaderAddress := store.Leader()
-
-			assert.Equal(GinkgoT(), true, isLeader)
-			assert.Equal(GinkgoT(), raftAddress, leaderAddress)
-		})
-
-		It("IsInitializedCluster()", func() {
-			ok := store.IsInitializedCluster()
-			assert.Equal(GinkgoT(), true, ok)
-		})
-	})
-
-	Describe("MultipleNode", func() {
-		var leaderCtl *gomock.Controller
-		var leaderEnforcer *mocks.MockIDistributedEnforcer
-		var leaderStore *Store
-		var leaderWorkDir string
-		var leaderAddress string
-		leaderID := "node-leader"
-
-		var followerCtl *gomock.Controller
-		var followerEnforcer *mocks.MockIDistributedEnforcer
-		var followerStore *Store
-		var followerWorkDir string
-		var followerAddress string
-		followerID := "node-follower"
-
-		BeforeEach(func() {
-			localIP := GetLocalIP()
-			leaderAddress = localIP + ":6790"
-			leaderCtl, leaderEnforcer, leaderStore, leaderWorkDir = newStore(leaderID, leaderAddress, true)
-			err := leaderStore.WaitLeader()
-			assert.NoError(GinkgoT(), err)
-
-			followerAddress = localIP + ":6791"
-			followerCtl, followerEnforcer, followerStore, followerWorkDir = newStore(followerID, followerAddress, false)
-			err = leaderStore.JoinNode(followerStore.ID(), followerStore.Address())
-			assert.NoError(GinkgoT(), err)
-			err = followerStore.WaitLeader()
-			assert.NoError(GinkgoT(), err)
-		})
-
-		AfterEach(func() {
-			leaderCtl.Finish()
-			leaderStore.Stop()
-			os.RemoveAll(leaderWorkDir)
-
-			followerCtl.Finish()
-			followerStore.Stop()
-			os.RemoveAll(followerWorkDir)
-		})
-
-		It("AddPolicy()", func() {
-			sec := "p"
-			pType := "p"
-			originalRules := [][]string{{"role:admin", "/", "*"}}
-			var rules []*command.StringArray
-			for _, rule := range originalRules {
-				rules = append(rules, &command.StringArray{Items: rule})
-			}
-
-			request := &command.AddPolicyRequest{
-				Sec:   sec,
-				PType: pType,
-				Rules: rules,
-			}
-
-			leaderEnforcer.EXPECT().AddPolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, originalRules).Return(originalRules, nil)
-			followerEnforcer.EXPECT().AddPolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, originalRules).Return(originalRules, nil)
-			err := leaderStore.AddPolicy(request)
-			assert.NoError(GinkgoT(), err)
-
-			// Waiting for synchronization data to follow node.
-			<-time.After(2 * time.Second)
-		})
-
-		It("RemovePolicy()", func() {
-			sec := "p"
-			pType := "p"
-			originalRules := [][]string{{"role:admin", "/", "*"}}
-			var rules []*command.StringArray
-			for _, rule := range originalRules {
-				rules = append(rules, &command.StringArray{Items: rule})
-			}
-
-			request := &command.RemovePolicyRequest{
-				Sec:   sec,
-				PType: pType,
-				Rules: rules,
-			}
-
-			leaderEnforcer.EXPECT().RemovePolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, originalRules).Return(originalRules, nil)
-			followerEnforcer.EXPECT().RemovePolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, originalRules).Return(originalRules, nil)
-			err := leaderStore.RemovePolicy(request)
-			assert.NoError(GinkgoT(), err)
-
-			// Waiting for synchronization data to follow node.
-			<-time.After(2 * time.Second)
-		})
-
-		It("RemoveFilteredPolicy()", func() {
-			sec := "p"
-			pType := "p"
-			fieldIndex := 0
-			fieldValues := []string{"role:admin"}
-			effected := [][]string{{"role:admin", "/", "*"}}
-
-			request := &command.RemoveFilteredPolicyRequest{
-				Sec:         sec,
-				PType:       pType,
-				FieldIndex:  int32(fieldIndex),
-				FieldValues: fieldValues,
-			}
-
-			leaderEnforcer.EXPECT().RemoveFilteredPolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, fieldIndex, fieldValues).Return(effected, nil)
-			followerEnforcer.EXPECT().RemoveFilteredPolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, fieldIndex, fieldValues).Return(effected, nil)
-			err := leaderStore.RemoveFilteredPolicy(request)
-			assert.NoError(GinkgoT(), err)
-
-			// Waiting for synchronization data to follow node.
-			<-time.After(2 * time.Second)
-		})
-
-		It("UpdatePolicy()", func() {
-			sec := "p"
-			pType := "p"
-			oldRule := []string{"role:admin", "/", "*"}
-			newRule := []string{"role:admin", "/admin", "*"}
-
-			request := &command.UpdatePolicyRequest{
-				Sec:     sec,
-				PType:   pType,
-				OldRule: oldRule,
-				NewRule: newRule,
-			}
-
-			leaderEnforcer.EXPECT().UpdatePolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, oldRule, newRule).Return(true, nil)
-			followerEnforcer.EXPECT().UpdatePolicySelf(gomock.AssignableToTypeOf(ShouldPersist), sec, pType, oldRule, newRule).Return(true, nil)
-			err := leaderStore.UpdatePolicy(request)
-			assert.NoError(GinkgoT(), err)
-
-			// Waiting for synchronization data to follow node.
-			<-time.After(2 * time.Second)
-		})
-
-		It("ClearPolicy()", func() {
-			leaderEnforcer.EXPECT().ClearPolicySelf(gomock.AssignableToTypeOf(ShouldPersist)).Return(nil)
-			followerEnforcer.EXPECT().ClearPolicySelf(gomock.AssignableToTypeOf(ShouldPersist)).Return(nil)
-			err := leaderStore.ClearPolicy()
-			assert.NoError(GinkgoT(), err)
-
-			// Waiting for synchronization data to follow node.
-			<-time.After(2 * time.Second)
-		})
-
-		It("ID()", func() {
-			assert.Equal(GinkgoT(), leaderID, leaderStore.ID())
-			assert.Equal(GinkgoT(), followerID, followerStore.ID())
-		})
-
-		It("Address()", func() {
-			assert.Equal(GinkgoT(), leaderAddress, leaderStore.Address())
-			assert.Equal(GinkgoT(), followerAddress, followerStore.Address())
-		})
-
-		It("Leader()", func() {
-			isLeader, address := leaderStore.Leader()
-			assert.Equal(GinkgoT(), true, isLeader)
-			assert.Equal(GinkgoT(), leaderAddress, address)
-
-			isLeader, address = followerStore.Leader()
-			assert.Equal(GinkgoT(), false, isLeader)
-			assert.Equal(GinkgoT(), leaderAddress, address)
-		})
-
-		It("RemoveNode()", func() {
-			err := leaderStore.RemoveNode(followerAddress)
-			assert.NoError(GinkgoT(), err)
-		})
-
-		It("IsInitializedCluster()", func() {
-			ok := leaderStore.IsInitializedCluster()
-			assert.Equal(GinkgoT(), true, ok)
-
-			ok = followerStore.IsInitializedCluster()
-			assert.Equal(GinkgoT(), true, ok)
-		})
-	})
-})

@@ -33,32 +33,32 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
-// AddPolicy mocks base method
-func (m *MockStore) AddPolicy(request *command.AddPolicyRequest) error {
+// AddPolicies mocks base method
+func (m *MockStore) AddPolicies(request *command.AddPoliciesRequest) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPolicy", request)
+	ret := m.ctrl.Call(m, "AddPolicies", request)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// AddPolicy indicates an expected call of AddPolicy
-func (mr *MockStoreMockRecorder) AddPolicy(request interface{}) *gomock.Call {
+// AddPolicies indicates an expected call of AddPolicies
+func (mr *MockStoreMockRecorder) AddPolicies(request interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPolicy", reflect.TypeOf((*MockStore)(nil).AddPolicy), request)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPolicies", reflect.TypeOf((*MockStore)(nil).AddPolicies), request)
 }
 
-// RemovePolicy mocks base method
-func (m *MockStore) RemovePolicy(request *command.RemovePolicyRequest) error {
+// RemovePolicies mocks base method
+func (m *MockStore) RemovePolicies(request *command.RemovePoliciesRequest) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemovePolicy", request)
+	ret := m.ctrl.Call(m, "RemovePolicies", request)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// RemovePolicy indicates an expected call of RemovePolicy
-func (mr *MockStoreMockRecorder) RemovePolicy(request interface{}) *gomock.Call {
+// RemovePolicies indicates an expected call of RemovePolicies
+func (mr *MockStoreMockRecorder) RemovePolicies(request interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicy", reflect.TypeOf((*MockStore)(nil).RemovePolicy), request)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicies", reflect.TypeOf((*MockStore)(nil).RemovePolicies), request)
 }
 
 // RemoveFilteredPolicy mocks base method
@@ -87,6 +87,20 @@ func (m *MockStore) UpdatePolicy(request *command.UpdatePolicyRequest) error {
 func (mr *MockStoreMockRecorder) UpdatePolicy(request interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicy", reflect.TypeOf((*MockStore)(nil).UpdatePolicy), request)
+}
+
+// UpdatePolicies mocks base method
+func (m *MockStore) UpdatePolicies(request *command.UpdatePoliciesRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePolicies", request)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePolicies indicates an expected call of UpdatePolicies
+func (mr *MockStoreMockRecorder) UpdatePolicies(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicies", reflect.TypeOf((*MockStore)(nil).UpdatePolicies), request)
 }
 
 // ClearPolicy mocks base method

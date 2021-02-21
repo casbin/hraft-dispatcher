@@ -2,12 +2,14 @@ package store
 
 import (
 	"context"
-	"github.com/cenkalti/backoff/v4"
-	"github.com/pkg/errors"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
+
+	"github.com/cenkalti/backoff/v4"
+	"github.com/pkg/errors"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/nodece/casbin-hraft-dispatcher/command"
@@ -32,7 +34,7 @@ var _ http.Store = &Store{}
 
 // Store is responsible for synchronization policy and storage policy by Raft protocol.
 type Store struct {
-	raftDir       string
+	dataDir       string
 	serverAddress string
 	serverID      string
 
@@ -64,7 +66,7 @@ type Config struct {
 // NewStore return a instance of Store.
 func NewStore(config *Config) (*Store, error) {
 	s := &Store{
-		raftDir:                config.Dir,
+		dataDir:                config.Dir,
 		serverID:               config.ID,
 		logger:                 zap.NewExample(),
 		networkTransportConfig: config.NetworkTransportConfig,
@@ -91,9 +93,9 @@ func (s *Store) Start(enableBootstrap bool) error {
 	if s.inMemory {
 		snapshots = raft.NewInmemSnapshotStore()
 	} else {
-		fileSnapshots, err := raft.NewFileSnapshotStore(s.raftDir, retainSnapshotCount, os.Stderr)
+		fileSnapshots, err := raft.NewFileSnapshotStore(s.dataDir, retainSnapshotCount, os.Stderr)
 		if err != nil {
-			s.logger.Error("failed to new file snapshot store", zap.Error(err), zap.String("raftData", s.raftDir))
+			s.logger.Error("failed to new file snapshot store", zap.Error(err), zap.String("raftData", s.dataDir))
 			return err
 		}
 		snapshots = fileSnapshots
@@ -105,7 +107,7 @@ func (s *Store) Start(enableBootstrap bool) error {
 		s.logStore = inMemStore
 		s.stableStore = inMemStore
 	} else {
-		dbPath := filepath.Join(s.raftDir, raftDBName)
+		dbPath := filepath.Join(s.dataDir, raftDBName)
 		boltDB, err := raftboltdb.NewBoltStore(dbPath)
 		if err != nil {
 			s.logger.Error("failed to new bolt store", zap.Error(err), zap.String("path", dbPath))
@@ -117,7 +119,7 @@ func (s *Store) Start(enableBootstrap bool) error {
 		s.stableStore = boltDB
 	}
 
-	fsm, err := NewFSM(s.raftDir, s.enforcer)
+	fsm, err := NewFSM(s.dataDir, s.enforcer)
 	if err != nil {
 		s.logger.Error("failed to new fsm", zap.Error(err))
 		return err
@@ -146,7 +148,7 @@ func (s *Store) Start(enableBootstrap bool) error {
 			return f.Error()
 		}
 	}
-
+	s.logger.Info(fmt.Sprintf("listening and serving Raft on %s", transport.LocalAddr()))
 	return nil
 }
 
@@ -172,7 +174,7 @@ func (s *Store) Stop() error {
 
 // IsInitializedCluster checks whether the cluster has been initialized.
 func (s *Store) IsInitializedCluster() bool {
-	if _, err := os.Stat(path.Join(s.raftDir, raftDBName)); err != nil {
+	if _, err := os.Stat(path.Join(s.dataDir, raftDBName)); err != nil {
 		if os.IsNotExist(err) {
 			return false
 		}
@@ -182,6 +184,10 @@ func (s *Store) IsInitializedCluster() bool {
 
 // WaitLeader detects the leader address in the current cluster.
 func (s *Store) WaitLeader() error {
+	if s.raft.Leader() != "" {
+		return nil
+	}
+
 	ticker := backoff.NewTicker(backoff.NewExponentialBackOff())
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -201,13 +207,18 @@ func (s *Store) WaitLeader() error {
 }
 
 // Address returns the address of the current node.
-func (s *Store) Address()  string {
+func (s *Store) Address() string {
 	return s.networkTransportConfig.Stream.Addr().String()
 }
 
 // ID returns the id of the current node.
 func (s *Store) ID() string {
 	return s.serverID
+}
+
+// DataDir returns the data directory of the current node.
+func (s *Store) DataDir() string {
+	return s.dataDir
 }
 
 // applyProtoMessage applies a proto message.
@@ -220,26 +231,26 @@ func (s *Store) applyProtoMessage(m proto.Message) error {
 }
 
 // AddPolicy implements the http.Store interface.
-func (s *Store) AddPolicy(request *command.AddPolicyRequest) error {
+func (s *Store) AddPolicies(request *command.AddPoliciesRequest) error {
 	data, err := proto.Marshal(request)
 	if err != nil {
 		return err
 	}
 	cmd := &command.Command{
-		Type: command.Command_COMMAND_TYPE_ADD,
+		Type: command.Command_COMMAND_TYPE_ADD_POLICIES,
 		Data: data,
 	}
 	return s.applyProtoMessage(cmd)
 }
 
-// RemovePolicy implements the http.Store interface.
-func (s *Store) RemovePolicy(request *command.RemovePolicyRequest) error {
+// RemovePolicies implements the http.Store interface.
+func (s *Store) RemovePolicies(request *command.RemovePoliciesRequest) error {
 	data, err := proto.Marshal(request)
 	if err != nil {
 		return err
 	}
 	cmd := &command.Command{
-		Type: command.Command_COMMAND_TYPE_REMOVE,
+		Type: command.Command_COMMAND_TYPE_REMOVE_POLICIES,
 		Data: data,
 	}
 	return s.applyProtoMessage(cmd)
@@ -252,7 +263,7 @@ func (s *Store) RemoveFilteredPolicy(request *command.RemoveFilteredPolicyReques
 		return err
 	}
 	cmd := &command.Command{
-		Type: command.Command_COMMAND_TYPE_REMOVE_FILTERED,
+		Type: command.Command_COMMAND_TYPE_REMOVE_FILTERED_POLICY,
 		Data: data,
 	}
 	return s.applyProtoMessage(cmd)
@@ -265,7 +276,20 @@ func (s *Store) UpdatePolicy(request *command.UpdatePolicyRequest) error {
 		return err
 	}
 	cmd := &command.Command{
-		Type: command.Command_COMMAND_TYPE_UPDATE,
+		Type: command.Command_COMMAND_TYPE_UPDATE_POLICY,
+		Data: data,
+	}
+	return s.applyProtoMessage(cmd)
+}
+
+// UpdatePolicies implements the http.Store interface.
+func (s *Store) UpdatePolicies(request *command.UpdatePoliciesRequest) error {
+	data, err := proto.Marshal(request)
+	if err != nil {
+		return err
+	}
+	cmd := &command.Command{
+		Type: command.Command_COMMAND_TYPE_UPDATE_POLICIES,
 		Data: data,
 	}
 	return s.applyProtoMessage(cmd)
@@ -274,7 +298,7 @@ func (s *Store) UpdatePolicy(request *command.UpdatePolicyRequest) error {
 // ClearPolicy implements the http.Store interface.
 func (s *Store) ClearPolicy() error {
 	cmd := &command.Command{
-		Type: command.Command_COMMAND_TYPE_CLEAR,
+		Type: command.Command_COMMAND_TYPE_CLEAR_POLICY,
 		Data: nil,
 	}
 	return s.applyProtoMessage(cmd)
@@ -294,5 +318,6 @@ func (s *Store) RemoveNode(serverID string) error {
 
 // Leader implements the http.Store interface.
 func (s *Store) Leader() (bool, string) {
+	_ = s.WaitLeader()
 	return s.raft.State() == raft.Leader, string(s.raft.Leader())
 }

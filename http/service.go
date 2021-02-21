@@ -27,14 +27,16 @@ import (
 
 // Store provides an interface that can be implemented by raft.
 type Store interface {
-	// AddPolicy adds a set of rules to the current policy.
-	AddPolicy(request *command.AddPolicyRequest) error
-	// RemovePolicy removes a set of rules from the current policy.
-	RemovePolicy(request *command.RemovePolicyRequest) error
+	// AddPolicies adds a set of rules to the current policy.
+	AddPolicies(request *command.AddPoliciesRequest) error
+	// RemovePolicies removes a set of rules from the current policy.
+	RemovePolicies(request *command.RemovePoliciesRequest) error
 	// RemoveFilteredPolicy removes a set of rules that match a pattern from the current policy.
 	RemoveFilteredPolicy(request *command.RemoveFilteredPolicyRequest) error
 	// UpdatePolicy updates a rule of policy.
 	UpdatePolicy(request *command.UpdatePolicyRequest) error
+	// UpdatePolicies updates a set of rules of policy.
+	UpdatePolicies(request *command.UpdatePoliciesRequest) error
 	// ClearPolicy clears all policies.
 	ClearPolicy() error
 
@@ -104,7 +106,19 @@ func (s *Service) leaderMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		isLeader, leaderAddr := s.store.Leader()
 		if !isLeader {
-			http.Redirect(w, r, s.getRedirectURL(r, leaderAddr), http.StatusTemporaryRedirect)
+			if len(leaderAddr) == 0 {
+				s.logger.Error("failed to get the leader address")
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			}
+			entryAddress, err := ConvertRaftAddressToHTTPAddress(leaderAddr)
+			if err != nil {
+				s.logger.Error("failed to convert the Raft address to HTTP address")
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			}
+			redirectURL := s.getRedirectURL(r, entryAddress)
+			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -125,7 +139,7 @@ func (s *Service) Start() error {
 	if err != nil {
 		return err
 	}
-	s.logger.Info(fmt.Sprintf("linstening on %s", ln.Addr()))
+	s.logger.Info(fmt.Sprintf("listening and serving HTTPS on %s", ln.Addr()))
 	s.ln = ln
 
 	go func() {
@@ -154,12 +168,11 @@ func (s *Service) Stop(ctx context.Context) error {
 
 // getRedirectURL returns a URL by the given host.
 func (s *Service) getRedirectURL(r *http.Request, host string) string {
-	u := r.URL
 	rq := r.URL.RawQuery
 	if rq != "" {
 		rq = fmt.Sprintf("?%s", rq)
 	}
-	return fmt.Sprintf("%s://%s%s%s", u.Scheme, host, r.URL.Path, rq)
+	return fmt.Sprintf("https://%s%s%s", host, r.URL.Path, rq)
 }
 
 // handleNodes handles request of nodes.
@@ -174,13 +187,13 @@ func (s *Service) handleAddPolicy(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var cmd command.AddPolicyRequest
+	var cmd command.AddPoliciesRequest
 	err = jsoniter.Unmarshal(data, &cmd)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.store.AddPolicy(&cmd)
+	err = s.store.AddPolicies(&cmd)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
@@ -220,13 +233,13 @@ func (s *Service) handleRemovePolicy(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		var cmd command.RemovePolicyRequest
+		var cmd command.RemovePoliciesRequest
 		err = jsoniter.Unmarshal(data, &cmd)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		err = s.store.RemovePolicy(&cmd)
+		err = s.store.RemovePolicies(&cmd)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
@@ -238,21 +251,44 @@ func (s *Service) handleRemovePolicy(w http.ResponseWriter, r *http.Request) {
 
 // handleUpdatePolicy handles the request to update a rule.
 func (s *Service) handleUpdatePolicy(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	var cmd command.UpdatePolicyRequest
-	err = jsoniter.Unmarshal(data, &cmd)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	err = s.store.UpdatePolicy(&cmd)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		return
+	updateType := r.URL.Query().Get("type")
+	switch updateType {
+	case "batch":
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		var cmd command.UpdatePoliciesRequest
+		err = jsoniter.Unmarshal(data, &cmd)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		err = s.store.UpdatePolicies(&cmd)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+	case "":
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		var cmd command.UpdatePolicyRequest
+		err = jsoniter.Unmarshal(data, &cmd)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		err = s.store.UpdatePolicy(&cmd)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+	default:
+		w.WriteHeader(http.StatusBadRequest)
 	}
 }
 
@@ -298,7 +334,7 @@ func (s *Service) Addr() string {
 	return s.ln.Addr().String()
 }
 
-func (s *Service) DoAddPolicyRequest(request *command.AddPolicyRequest) error {
+func (s *Service) DoAddPolicyRequest(request *command.AddPoliciesRequest) error {
 	b, err := jsoniter.Marshal(request)
 	if err != nil {
 		return err
@@ -320,7 +356,7 @@ func (s *Service) DoAddPolicyRequest(request *command.AddPolicyRequest) error {
 	return nil
 }
 
-func (s *Service) DoRemovePolicyRequest(request *command.RemovePolicyRequest) error {
+func (s *Service) DoRemovePolicyRequest(request *command.RemovePoliciesRequest) error {
 	b, err := jsoniter.Marshal(request)
 	if err != nil {
 		return err
@@ -401,7 +437,28 @@ func (s *Service) DoUpdatePolicyRequest(request *command.UpdatePolicyRequest) er
 	return nil
 }
 
-func (s *Service) DoJoinNodeRequest(request *command.AddNodeRequest)  error {
+func (s *Service) DoUpdatePoliciesRequest(request *command.UpdatePoliciesRequest) error {
+	b, err := jsoniter.Marshal(request)
+	if err != nil {
+		return err
+	}
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/update?type=batch", s.Addr()), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
+
+	return nil
+}
+
+func (s *Service) DoJoinNodeRequest(request *command.AddNodeRequest) error {
 	b, err := jsoniter.Marshal(request)
 	if err != nil {
 		return err
@@ -422,7 +479,7 @@ func (s *Service) DoJoinNodeRequest(request *command.AddNodeRequest)  error {
 	return nil
 }
 
-func (s *Service) DoRemoveNodeRequest(request *command.RemoveNodeRequest)  error {
+func (s *Service) DoRemoveNodeRequest(request *command.RemoveNodeRequest) error {
 	b, err := jsoniter.Marshal(request)
 	if err != nil {
 		return err
@@ -473,4 +530,13 @@ func DoJoinNodeRequest(clusterAddress string, nodeID string, nodeAddress string,
 	}
 
 	return nil
+}
+
+func ConvertRaftAddressToHTTPAddress(raftAddress string) (string, error) {
+	addr, err := net.ResolveTCPAddr("tcp", raftAddress)
+	if err != nil {
+		return "", err
+	}
+	httpListenAddress := fmt.Sprintf("%s:%d", addr.IP, addr.Port+1)
+	return httpListenAddress, nil
 }
