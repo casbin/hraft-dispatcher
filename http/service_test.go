@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/nodece/casbin-hraft-dispatcher/command"
-	"github.com/nodece/casbin-hraft-dispatcher/http/mocks"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/casbin/hraft-dispatcher/command"
+	"github.com/casbin/hraft-dispatcher/http/mocks"
+	"github.com/golang/mock/gomock"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewService(t *testing.T) {

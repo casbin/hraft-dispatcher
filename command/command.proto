@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package command;
 
-option go_package = "github.com/nodece/casbin-hraft-dispatcher/command";
+option go_package = "github.com/casbin/hraft-dispatcher/command";
 
 message StringArray {
   repeated string items = 1;

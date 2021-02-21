@@ -1,4 +1,4 @@
-module github.com/nodece/casbin-hraft-dispatcher
+module github.com/casbin/hraft-dispatcher
 
 go 1.15
 
@@ -16,7 +16,6 @@ require (
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.6.1
 	go.etcd.io/bbolt v1.3.5
-	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
 	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb
 	google.golang.org/protobuf v1.25.0

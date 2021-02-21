@@ -1,7 +1,17 @@
-# casbin-hraft-dispatcher 
+# hraft-dispatcher 
 
 A dispatcher based on Hashicorp's Raft for Casbin.
 
-### Contribution
+## Installation
 
-You are welcome to contribute any code.
+```shell
+go get github.com/casbin/hraft-dispatcher
+```
+
+## Contribution
+
+Thank you for your interest in contributing!
+
+## License
+
+This project is under Apache 2.0 License. See the [LICENSE](LICENSE) file for the full license text.

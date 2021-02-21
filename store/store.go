@@ -12,8 +12,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/casbin/casbin/v2"
-	"github.com/nodece/casbin-hraft-dispatcher/command"
-	"github.com/nodece/casbin-hraft-dispatcher/http"
+	"github.com/casbin/hraft-dispatcher/command"
+	"github.com/casbin/hraft-dispatcher/http"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/hashicorp/go-multierror"

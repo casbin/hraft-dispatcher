@@ -3,7 +3,7 @@ package store
 import (
 	"fmt"
 
-	"github.com/nodece/casbin-hraft-dispatcher/command"
+	"github.com/casbin/hraft-dispatcher/command"
 	"google.golang.org/protobuf/proto"
 
 	"io"

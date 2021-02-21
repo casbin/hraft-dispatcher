@@ -10,10 +10,10 @@ import (
 
 	"github.com/casbin/casbin/v2"
 
+	"github.com/casbin/hraft-dispatcher/command"
+	"github.com/casbin/hraft-dispatcher/store/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/raft"
-	"github.com/nodece/casbin-hraft-dispatcher/command"
-	"github.com/nodece/casbin-hraft-dispatcher/store/mocks"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 )

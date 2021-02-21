@@ -18,7 +18,7 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"github.com/nodece/casbin-hraft-dispatcher/command"
+	"github.com/casbin/hraft-dispatcher/command"
 
 	"go.uber.org/zap"
 )

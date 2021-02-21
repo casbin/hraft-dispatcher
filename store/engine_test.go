@@ -7,8 +7,8 @@ import (
 	"path"
 	"testing"
 
+	"github.com/casbin/hraft-dispatcher/store/mocks"
 	"github.com/golang/mock/gomock"
-	"github.com/nodece/casbin-hraft-dispatcher/store/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
