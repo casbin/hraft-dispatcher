@@ -189,12 +189,14 @@ func TestStore_MultipleNode(t *testing.T) {
 
 	leaderStore, err := newStore(leaderEnforcer, leaderID, leaderAddress, true)
 	assert.NoError(t, err)
+	defer leaderStore.Stop()
 
 	err = leaderStore.WaitLeader()
 	assert.NoError(t, err)
 
 	followerStore, err := newStore(followerEnforcer, followerID, followerAddress, false)
 	assert.NoError(t, err)
+	defer followerStore.Stop()
 
 	err = leaderStore.JoinNode(followerStore.ID(), followerStore.Address())
 	assert.NoError(t, err)
