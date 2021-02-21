@@ -2,6 +2,8 @@
 
 A dispatcher based on Hashicorp's Raft for Casbin.
 
+**NOTE:** Currently in the beta version, only for testing. 
+
 ## Installation
 
 ```shell
