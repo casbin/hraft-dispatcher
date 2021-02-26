@@ -113,6 +113,7 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 	}
 
 	if isNewCluster && config.JoinAddress != config.RaftListenAddress && len(config.JoinAddress) != 0 {
+		logger.Info("start joining the current node to existing cluster")
 		entryAddress, err := http.ConvertRaftAddressToHTTPAddress(config.JoinAddress)
 		if err != nil {
 			logger.Error("failed to convert the Raft address to HTTP address", zap.String("nodeID", config.ServerID), zap.String("nodeAddress", config.RaftListenAddress), zap.String("clusterAddress", config.JoinAddress), zap.Error(err))
@@ -123,6 +124,7 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 			logger.Error("failed to join the current node to existing cluster", zap.String("nodeID", config.ServerID), zap.String("nodeAddress", config.RaftListenAddress), zap.String("clusterAddress", config.JoinAddress), zap.Error(err))
 			return nil, err
 		}
+		logger.Info("the current node has joined to existing cluster")
 	}
 
 	httpService, err := http.NewService(httpListenAddress, config.TLSConfig, s)
