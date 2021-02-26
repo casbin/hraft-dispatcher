@@ -1,0 +1,12 @@
+httpListenAddress: 127.0.0.1:6790
+
+# Dispatcher config
+tls:
+  rootCert: ../testdata/ca/ca.pem
+  key: ../testdata/ca/peer-key.pem
+  cert: ../testdata/ca/peer.pem
+
+serverID: node-leader
+dataDir: ./tmp/follow-data
+raftListenAddress: 127.0.0.1:6791
+joinAddress: 127.0.0.1:6781

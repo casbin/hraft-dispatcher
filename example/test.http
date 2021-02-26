@@ -1,0 +1,128 @@
+### add a rule in leader node
+PUT http://127.0.0.1:6780/policies
+Content-Type: application/json
+
+[
+  "role:admin",
+  "/",
+  "GET"
+]
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200);
+});
+%}
+
+### add a rule in follower node
+PUT http://127.0.0.1:6790/policies
+Content-Type: application/json
+
+[
+  "role:admin",
+  "/",
+  "POST"
+]
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200);
+});
+%}
+
+### enforcer a rule in leader node
+PUT http://127.0.0.1:6780/enforcer
+Content-Type: application/json
+
+[
+  "role:admin",
+  "/",
+  "GET"
+]
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.body === "Authorized");
+});
+%}
+
+### enforcer a rule in leader node
+PUT http://127.0.0.1:6780/enforcer
+Content-Type: application/json
+
+[
+  "role:admin",
+  "/",
+  "POST"
+]
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.body === "Authorized");
+});
+%}
+
+### remove a rule in leader node
+DELETE http://127.0.0.1:6790/policies
+Content-Type: application/json
+
+[
+  "role:admin",
+  "/",
+  "POST"
+]
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200);
+});
+%}
+
+### remove a rule in follower node
+DELETE http://127.0.0.1:6790/policies
+Content-Type: application/json
+
+[
+  "role:admin",
+  "/",
+  "GET"
+]
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200);
+});
+%}
+
+
+### enforcer a rule in leader node
+PUT http://127.0.0.1:6780/enforcer
+Content-Type: application/json
+
+[
+  "role:admin",
+  "/",
+  "POST"
+]
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.body === "Unauthorized");
+});
+%}
+
+### enforcer a rule in follower node
+PUT http://127.0.0.1:6790/enforcer
+Content-Type: application/json
+
+[
+  "role:admin",
+  "/",
+  "GET"
+]
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.body === "Unauthorized");
+});
+%}
