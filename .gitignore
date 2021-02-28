@@ -16,5 +16,5 @@
 
 .idea
 
-./example/tmp/
-./example/example
+example/tmp/*
+example/example
