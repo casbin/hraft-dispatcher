@@ -8,9 +8,9 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/go-chi/chi v1.5.1
 	github.com/golang/mock v1.4.4
+	github.com/hashicorp/go-msgpack v0.5.5
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/raft v1.2.0
-	github.com/hashicorp/raft-boltdb v0.0.0-20171010151810-6e5ba93211ea
 	github.com/json-iterator/go v1.1.10
 	github.com/pkg/errors v0.8.1
 	github.com/smartystreets/goconvey v1.6.4

@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/casbin/hraft-dispatcher/store/logstore"
+
 	"github.com/cenkalti/backoff/v4"
 	"github.com/pkg/errors"
 
@@ -19,8 +21,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/hashicorp/raft"
-	raftboltdb "github.com/hashicorp/raft-boltdb"
-
 	"go.uber.org/zap"
 )
 
@@ -46,7 +46,7 @@ type Store struct {
 	logStore               raft.LogStore
 	stableStore            raft.StableStore
 	fms                    raft.FSM
-	boltStore              *raftboltdb.BoltStore
+	boltStore              *logstore.BoltStore
 
 	enforcer casbin.IDistributedEnforcer
 
@@ -108,7 +108,7 @@ func (s *Store) Start(enableBootstrap bool) error {
 		s.stableStore = inMemStore
 	} else {
 		dbPath := filepath.Join(s.dataDir, raftDBName)
-		boltDB, err := raftboltdb.NewBoltStore(dbPath)
+		boltDB, err := logstore.NewBoltStore(dbPath)
 		if err != nil {
 			s.logger.Error("failed to new bolt store", zap.Error(err), zap.String("path", dbPath))
 			return err
