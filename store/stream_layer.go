@@ -15,12 +15,7 @@ type TCPStreamLayer struct {
 }
 
 // NewStreamLayer returns a StreamLayer.
-func NewTCPStreamLayer(address string, tlsConfig *tls.Config) (*TCPStreamLayer, error) {
-	ln, err := tls.Listen("tcp", address, tlsConfig)
-	if err != nil {
-		return nil, err
-	}
-
+func NewTCPStreamLayer(ln net.Listener, tlsConfig *tls.Config) (*TCPStreamLayer, error) {
 	layer := &TCPStreamLayer{
 		ln:        ln,
 		tlsConfig: tlsConfig,
@@ -30,6 +25,10 @@ func NewTCPStreamLayer(address string, tlsConfig *tls.Config) (*TCPStreamLayer, 
 
 // Dial implements the StreamLayer interface.
 func (t *TCPStreamLayer) Dial(address raft.ServerAddress, timeout time.Duration) (net.Conn, error) {
+	if t.tlsConfig == nil {
+		return net.DialTimeout("tcp", string(address), timeout)
+	}
+
 	dialer := &net.Dialer{
 		Timeout: timeout,
 	}

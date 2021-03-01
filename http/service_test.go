@@ -3,10 +3,15 @@ package http
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/casbin/hraft-dispatcher/command"
 	"github.com/casbin/hraft-dispatcher/http/mocks"
@@ -20,7 +25,9 @@ func TestNewService(t *testing.T) {
 	defer ctl.Finish()
 
 	store := mocks.NewMockStore(ctl)
-	s, err := NewService("127.0.0.1:0", nil, store)
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	assert.NoError(t, err)
+	s, err := NewService(ln, nil, store)
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
 }
@@ -30,7 +37,9 @@ func TestRedirect(t *testing.T) {
 	defer ctl.Finish()
 
 	store := mocks.NewMockStore(ctl)
-	s, err := NewService("127.0.0.1:0", nil, store)
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	assert.NoError(t, err)
+	s, err := NewService(ln, nil, store)
 	assert.NoError(t, err)
 
 	r := httptest.NewRequest(http.MethodPut, "https://127.0.0.1:6971/policies/add", nil)
@@ -44,7 +53,9 @@ func TestLeader(t *testing.T) {
 	defer ctl.Finish()
 
 	store := mocks.NewMockStore(ctl)
-	s, err := NewService("127.0.0.1:0", nil, store)
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	assert.NoError(t, err)
+	s, err := NewService(ln, nil, store)
 	assert.NoError(t, err)
 
 	store.EXPECT().Leader().Return(true, "127.0.0.1:6790")
@@ -57,7 +68,7 @@ func TestLeader(t *testing.T) {
 	store.EXPECT().Leader().Return(false, "127.0.0.1:6790")
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, httptest.NewRequest(http.MethodPut, "https://testing", nil))
-	assert.Equal(t, w.Header().Get("Location"), "https://127.0.0.1:6791")
+	assert.Equal(t, w.Header().Get("Location"), "https://127.0.0.1:6790")
 	assert.Equal(t, w.Code, http.StatusTemporaryRedirect)
 }
 
@@ -72,7 +83,9 @@ func TestAddPolicy(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	s, err := NewService("127.0.0.1:0", ts.TLS, store)
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
+	assert.NoError(t, err)
+	s, err := NewService(ln, ts.TLS, store)
 	assert.NoError(t, err)
 
 	err = s.Start()
@@ -108,9 +121,10 @@ func TestRemovePolicy(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	s, err := NewService("127.0.0.1:0", ts.TLS, store)
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	assert.NotNil(t, s)
+	s, err := NewService(ln, ts.TLS, store)
+	assert.NoError(t, err)
 
 	err = s.Start()
 	assert.NoError(t, err)
@@ -145,9 +159,10 @@ func TestRemoveFilteredPolicy(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	s, err := NewService("127.0.0.1:0", ts.TLS, store)
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	assert.NotNil(t, s)
+	s, err := NewService(ln, ts.TLS, store)
+	assert.NoError(t, err)
 
 	err = s.Start()
 	assert.NoError(t, err)
@@ -183,9 +198,10 @@ func TestUpdatePolicy(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	s, err := NewService("127.0.0.1:0", ts.TLS, store)
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	assert.NotNil(t, s)
+	s, err := NewService(ln, ts.TLS, store)
+	assert.NoError(t, err)
 
 	err = s.Start()
 	assert.NoError(t, err)
@@ -221,9 +237,10 @@ func TestClearPolicy(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	s, err := NewService("127.0.0.1:0", ts.TLS, store)
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	assert.NotNil(t, s)
+	s, err := NewService(ln, ts.TLS, store)
+	assert.NoError(t, err)
 
 	err = s.Start()
 	assert.NoError(t, err)
@@ -251,9 +268,10 @@ func TestJoinNode(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	s, err := NewService("127.0.0.1:0", ts.TLS, store)
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	assert.NotNil(t, s)
+	s, err := NewService(ln, ts.TLS, store)
+	assert.NoError(t, err)
 
 	err = s.Start()
 	assert.NoError(t, err)
@@ -276,6 +294,29 @@ func TestJoinNode(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
+func GetTLSConfig() (*tls.Config, error) {
+	rootCAPool := x509.NewCertPool()
+	rootCA, err := ioutil.ReadFile("../testdata/ca/ca.pem")
+	if err != nil {
+		return nil, err
+	}
+	rootCAPool.AppendCertsFromPEM(rootCA)
+
+	cert, err := tls.LoadX509KeyPair("../testdata/ca/peer.pem", "../testdata/ca/peer-key.pem")
+	if err != nil {
+		return nil, err
+	}
+
+	config := &tls.Config{
+		RootCAs:      rootCAPool,
+		ClientCAs:    rootCAPool,
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		Certificates: []tls.Certificate{cert},
+	}
+
+	return config, nil
+}
+
 func TestRemoveNode(t *testing.T) {
 	ctl := gomock.NewController(t)
 	defer ctl.Finish()
@@ -287,9 +328,12 @@ func TestRemoveNode(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	s, err := NewService("127.0.0.1:0", ts.TLS, store)
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	assert.NotNil(t, s)
+
+	<-time.After(3 * time.Second)
+	s, err := NewService(ln, ts.TLS, store)
+	assert.NoError(t, err)
 
 	err = s.Start()
 	assert.NoError(t, err)

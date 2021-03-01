@@ -27,11 +27,11 @@ type TLS struct {
 }
 
 type Config struct {
-	TLS               TLS    `yaml:"tls"`
-	ServerID          string `yaml:"serverID"`
-	DataDir           string `yaml:"dataDir"`
-	JoinAddress       string `yaml:"joinAddress"`
-	RaftListenAddress string `yaml:"raftListenAddress"`
+	TLS           TLS    `yaml:"tls"`
+	ServerID      string `yaml:"serverID"`
+	DataDir       string `yaml:"dataDir"`
+	JoinAddress   string `yaml:"joinAddress"`
+	ListenAddress string `yaml:"listenAddress"`
 
 	HTTPListenAddress string `yaml:"httpListenAddress"`
 }
@@ -106,11 +106,11 @@ m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act
 
 	// New a Dispatcher
 	dispatcher, err := hraftdispatcher.NewHRaftDispatcher(&hraftdispatcher.Config{
-		Enforcer:          e,
-		JoinAddress:       config.JoinAddress,
-		RaftListenAddress: config.RaftListenAddress,
-		TLSConfig:         tlsConfig,
-		DataDir:           config.DataDir,
+		Enforcer:      e,
+		JoinAddress:   config.JoinAddress,
+		ListenAddress: config.ListenAddress,
+		TLSConfig:     tlsConfig,
+		DataDir:       config.DataDir,
 	})
 	if err != nil {
 		log.Fatal(err)

@@ -8,5 +8,5 @@ tls:
 
 serverID: node-leader
 dataDir: ./tmp/follow-data
-raftListenAddress: 127.0.0.1:6791
+listenAddress: 127.0.0.1:6791
 joinAddress: 127.0.0.1:6781

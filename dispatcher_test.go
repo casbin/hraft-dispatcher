@@ -515,11 +515,11 @@ m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act
 	}
 
 	dispatcher, err := NewHRaftDispatcher(&Config{
-		Enforcer:          e,
-		JoinAddress:       joinAddress,
-		RaftListenAddress: raftListenAddress,
-		TLSConfig:         tlsConfig,
-		DataDir:           dir,
+		Enforcer:      e,
+		JoinAddress:   joinAddress,
+		ListenAddress: raftListenAddress,
+		TLSConfig:     tlsConfig,
+		DataDir:       dir,
 	})
 	if err != nil {
 		return nil, nil, err

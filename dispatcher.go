@@ -3,6 +3,8 @@ package hraftdispatcher
 import (
 	"context"
 	"crypto/tls"
+	"github.com/soheilhy/cmux"
+	"net"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -41,26 +43,30 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 		return nil, errors.New("DataDir is not provided in config")
 	}
 
-	if len(config.RaftListenAddress) == 0 {
-		return nil, errors.New("RaftListenAddress is not provided in config")
-	}
-
-	if config.TLSConfig == nil {
-		return nil, errors.New("TLSConfig is not provided in config")
-	}
-
-	httpListenAddress, err := http.ConvertRaftAddressToHTTPAddress(config.RaftListenAddress)
-	if err != nil {
-		return nil, err
+	if len(config.ListenAddress) == 0 {
+		return nil, errors.New("ListenAddress is not provided in config")
 	}
 
 	if len(config.ServerID) == 0 {
-		config.ServerID = config.RaftListenAddress
+		config.ServerID = config.ListenAddress
 	}
 
 	logger := zap.NewExample()
 
-	streamLayer, err := store.NewTCPStreamLayer(config.RaftListenAddress, config.TLSConfig)
+	var ln net.Listener
+	var err error
+	if config.TLSConfig == nil {
+		ln, err = net.Listen("tcp", config.ListenAddress)
+	} else {
+		ln, err = tls.Listen("tcp", config.ListenAddress, config.TLSConfig)
+	}
+
+	mux := cmux.New(ln)
+	httpLn := mux.Match(cmux.HTTP1Fast())
+	raftLn := mux.Match(cmux.Any())
+	go mux.Serve()
+
+	streamLayer, err := store.NewTCPStreamLayer(raftLn, config.TLSConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, err
@@ -112,22 +118,17 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 		}
 	}
 
-	if isNewCluster && config.JoinAddress != config.RaftListenAddress && len(config.JoinAddress) != 0 {
+	if isNewCluster && config.JoinAddress != config.ListenAddress && len(config.JoinAddress) != 0 {
 		logger.Info("start joining the current node to existing cluster")
-		entryAddress, err := http.ConvertRaftAddressToHTTPAddress(config.JoinAddress)
+		err = http.DoJoinNodeRequest(config.JoinAddress, config.ServerID, config.ListenAddress, config.TLSConfig)
 		if err != nil {
-			logger.Error("failed to convert the Raft address to HTTP address", zap.String("nodeID", config.ServerID), zap.String("nodeAddress", config.RaftListenAddress), zap.String("clusterAddress", config.JoinAddress), zap.Error(err))
-			return nil, err
-		}
-		err = http.DoJoinNodeRequest(entryAddress, config.ServerID, config.RaftListenAddress, config.TLSConfig)
-		if err != nil {
-			logger.Error("failed to join the current node to existing cluster", zap.String("nodeID", config.ServerID), zap.String("nodeAddress", config.RaftListenAddress), zap.String("clusterAddress", config.JoinAddress), zap.Error(err))
+			logger.Error("failed to join the current node to existing cluster", zap.String("nodeID", config.ServerID), zap.String("nodeAddress", config.ListenAddress), zap.String("clusterAddress", config.JoinAddress), zap.Error(err))
 			return nil, err
 		}
 		logger.Info("the current node has joined to existing cluster")
 	}
 
-	httpService, err := http.NewService(httpListenAddress, config.TLSConfig, s)
+	httpService, err := http.NewService(httpLn, config.TLSConfig, s)
 	if err != nil {
 		return nil, err
 	}
@@ -146,14 +147,22 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 
 	h.shutdownFn = func() error {
 		var ret error
+
 		err := s.Stop()
 		if err != nil {
 			ret = multierror.Append(ret, err)
 		}
+
 		err = httpService.Stop(context.Background())
 		if err != nil {
 			ret = multierror.Append(ret, err)
 		}
+
+		err = ln.Close()
+		if err != nil {
+			ret = multierror.Append(ret, err)
+		}
+
 		return ret
 	}
 

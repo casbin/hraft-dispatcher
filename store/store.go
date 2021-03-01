@@ -38,7 +38,6 @@ type Store struct {
 	serverAddress string
 	serverID      string
 
-	ln                     raft.Transport
 	raft                   *raft.Raft
 	networkTransportConfig *raft.NetworkTransportConfig
 	transport              raft.Transport
@@ -167,6 +166,11 @@ func (s *Store) Stop() error {
 			s.logger.Error("failed to close bolt database", zap.Error(err))
 			result = multierror.Append(result, err)
 		}
+	}
+
+	err := s.networkTransportConfig.Stream.Close()
+	if err != nil {
+		result = multierror.Append(result, err)
 	}
 
 	return result

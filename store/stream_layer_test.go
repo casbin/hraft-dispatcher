@@ -1,6 +1,7 @@
 package store
 
 import (
+	"crypto/tls"
 	"net/http/httptest"
 	"testing"
 
@@ -13,7 +14,10 @@ func TestNewTCPStreamLayer(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	layer, err := NewTCPStreamLayer("0.0.0.0:0", ts.TLS)
+	ln, err := tls.Listen("tcp", "0.0.0.0:0", ts.TLS)
+	assert.NoError(t, err)
+
+	layer, err := NewTCPStreamLayer(ln, ts.TLS)
 	assert.NoError(t, err)
 	defer layer.Close()
 }

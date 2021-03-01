@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -54,27 +55,37 @@ type Service struct {
 	ln         net.Listener
 	store      Store
 	httpClient *http.Client
-
-	logger *zap.Logger
+	tlsConfig  *tls.Config
+	logger     *zap.Logger
 }
 
 // NewService creates a Service.
-func NewService(address string, tlsConfig *tls.Config, store Store) (*Service, error) {
+func NewService(ln net.Listener, tlsConfig *tls.Config, store Store) (*Service, error) {
+	if ln == nil {
+		return nil, errors.New("net.Listener is provided")
+	}
+
 	if store == nil {
 		return nil, errors.New("store is not provided")
 	}
 
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
-		Transport: &http2.Transport{
+	}
+
+	if tlsConfig != nil {
+		// TODO: using http2.Transport always return unexpected eof on cmux.
+		httpClient.Transport = &http.Transport{
 			TLSClientConfig: tlsConfig,
-		},
+		}
 	}
 
 	s := &Service{
 		logger:     zap.NewExample(),
 		store:      store,
 		httpClient: httpClient,
+		ln:         ln,
+		tlsConfig:  tlsConfig,
 	}
 
 	r := chi.NewRouter()
@@ -89,12 +100,15 @@ func NewService(address string, tlsConfig *tls.Config, store Store) (*Service, e
 	})
 
 	s.srv = &http.Server{
-		Addr:              address,
 		Handler:           r,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       5 * time.Minute,
 		TLSConfig:         tlsConfig,
+	}
+
+	if tlsConfig != nil {
+		_ = http2.ConfigureServer(s.srv, nil)
 	}
 
 	return s, nil
@@ -111,13 +125,7 @@ func (s *Service) leaderMiddleware(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusServiceUnavailable)
 				return
 			}
-			entryAddress, err := ConvertRaftAddressToHTTPAddress(leaderAddr)
-			if err != nil {
-				s.logger.Error("failed to convert the Raft address to HTTP address")
-				w.WriteHeader(http.StatusServiceUnavailable)
-				return
-			}
-			redirectURL := s.getRedirectURL(r, entryAddress)
+			redirectURL := s.getRedirectURL(r, leaderAddr)
 			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 			return
 		}
@@ -128,22 +136,16 @@ func (s *Service) leaderMiddleware(next http.Handler) http.Handler {
 // Start starts this service.
 // It always returns a non-nil error. After Shutdown or Close, the returned error is http.ErrServerClosed.
 func (s *Service) Start() error {
-	_ = http2.ConfigureServer(s.srv, nil)
-
-	addr := s.srv.Addr
-	if addr == "" {
-		addr = ":https"
-	}
-
-	ln, err := net.Listen("tcp", addr)
-	if err != nil {
-		return err
-	}
-	s.logger.Info(fmt.Sprintf("listening and serving HTTPS on %s", ln.Addr()))
-	s.ln = ln
-
 	go func() {
-		err = s.srv.ServeTLS(ln, "", "")
+		var err error
+		if s.tlsConfig == nil {
+			s.logger.Info(fmt.Sprintf("listening and serving HTTP on %s", s.ln.Addr()))
+			err = s.srv.Serve(s.ln)
+		} else {
+			s.logger.Info(fmt.Sprintf("listening and serving HTTPS on %s", s.ln.Addr()))
+			err = s.srv.Serve(s.ln)
+			err = s.srv.ServeTLS(s.ln, "", "")
+		}
 		if err != nil && err != http.ErrServerClosed {
 			s.logger.Error("unable to serve http", zap.Error(err))
 		}
@@ -172,7 +174,27 @@ func (s *Service) getRedirectURL(r *http.Request, host string) string {
 	if rq != "" {
 		rq = fmt.Sprintf("?%s", rq)
 	}
-	return fmt.Sprintf("https://%s%s%s", host, r.URL.Path, rq)
+
+	var scheme string
+	if strings.HasPrefix(r.RequestURI, "https") {
+		scheme = "https"
+	} else if strings.HasPrefix(r.RequestURI, "http") {
+		scheme = "http"
+	}
+
+	if len(scheme) == 0 {
+		scheme = s.GetScheme()
+	}
+
+	return fmt.Sprintf("%s://%s%s%s", scheme, host, r.URL.Path, rq)
+}
+
+func (s *Service) GetScheme() string {
+	scheme := "https"
+	if s.tlsConfig == nil {
+		scheme = "http"
+	}
+	return scheme
 }
 
 // handleNodes handles request of nodes.
@@ -340,7 +362,7 @@ func (s *Service) DoAddPolicyRequest(request *command.AddPoliciesRequest) error 
 		return err
 	}
 
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/add", s.Addr()), bytes.NewBuffer(b))
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/policies/add", s.GetScheme(), s.Addr()), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -361,7 +383,7 @@ func (s *Service) DoRemovePolicyRequest(request *command.RemovePoliciesRequest) 
 	if err != nil {
 		return err
 	}
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/remove", s.Addr()), bytes.NewBuffer(b))
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/policies/remove", s.GetScheme(), s.Addr()), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -383,7 +405,7 @@ func (s *Service) DoRemoveFilteredPolicyRequest(request *command.RemoveFilteredP
 		return err
 	}
 
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/remove?type=filtered", s.Addr()), bytes.NewBuffer(b))
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/policies/remove?type=filtered", s.GetScheme(), s.Addr()), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -400,7 +422,7 @@ func (s *Service) DoRemoveFilteredPolicyRequest(request *command.RemoveFilteredP
 }
 
 func (s *Service) DoClearPolicyRequest() error {
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/remove?type=all", s.Addr()), nil)
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/policies/remove?type=all", s.GetScheme(), s.Addr()), nil)
 	if err != nil {
 		return err
 	}
@@ -421,7 +443,7 @@ func (s *Service) DoUpdatePolicyRequest(request *command.UpdatePolicyRequest) er
 	if err != nil {
 		return err
 	}
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/update", s.Addr()), bytes.NewBuffer(b))
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/policies/update", s.GetScheme(), s.Addr()), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -442,7 +464,7 @@ func (s *Service) DoUpdatePoliciesRequest(request *command.UpdatePoliciesRequest
 	if err != nil {
 		return err
 	}
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/update?type=batch", s.Addr()), bytes.NewBuffer(b))
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/policies/update?type=batch", s.GetScheme(), s.Addr()), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -463,7 +485,7 @@ func (s *Service) DoJoinNodeRequest(request *command.AddNodeRequest) error {
 	if err != nil {
 		return err
 	}
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/nodes/join", s.Addr()), bytes.NewBuffer(b))
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/nodes/join", s.GetScheme(), s.Addr()), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -484,7 +506,7 @@ func (s *Service) DoRemoveNodeRequest(request *command.RemoveNodeRequest) error 
 	if err != nil {
 		return err
 	}
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/nodes/remove", s.Addr()), bytes.NewBuffer(b))
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/nodes/remove", s.GetScheme(), s.Addr()), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -501,7 +523,7 @@ func (s *Service) DoRemoveNodeRequest(request *command.RemoveNodeRequest) error 
 }
 
 func DoJoinNodeRequest(clusterAddress string, nodeID string, nodeAddress string, tlsConfig *tls.Config) error {
-	tr := &http2.Transport{
+	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
 	}
 	client := http.Client{Transport: tr}
@@ -516,7 +538,11 @@ func DoJoinNodeRequest(clusterAddress string, nodeID string, nodeAddress string,
 		return err
 	}
 
-	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/nodes/join", clusterAddress), bytes.NewBuffer(b))
+	scheme := "https"
+	if tlsConfig == nil {
+		scheme = "http"
+	}
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/nodes/join", scheme, clusterAddress), bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -530,13 +556,4 @@ func DoJoinNodeRequest(clusterAddress string, nodeID string, nodeAddress string,
 	}
 
 	return nil
-}
-
-func ConvertRaftAddressToHTTPAddress(raftAddress string) (string, error) {
-	addr, err := net.ResolveTCPAddr("tcp", raftAddress)
-	if err != nil {
-		return "", err
-	}
-	httpListenAddress := fmt.Sprintf("%s:%d", addr.IP, addr.Port+1)
-	return httpListenAddress, nil
 }

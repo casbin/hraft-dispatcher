@@ -8,6 +8,6 @@ tls:
 
 serverID: node-leader
 dataDir: ./tmp/leader-data
-raftListenAddress: 127.0.0.1:6781
+listenAddress: 127.0.0.1:6781
 joinAddress: ""
 

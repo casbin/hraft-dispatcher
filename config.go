@@ -15,10 +15,8 @@ type Config struct {
 	JoinAddress string
 	// DataDir holds raft data.
 	DataDir string
-	// RaftListenAddress is a network address for raft server.
-	// It should be noted that we will use the port of this address plus an offset of 1 as the listen address of the HTTP server.
-	// If set to 10.0.10.10:6790, the Raft server runs on 10.0.10.10:6790, the HTTP server runs on10.0.10.10:6791.
-	RaftListenAddress string
+	// ListenAddress is a network address for raft server and HTTP server.
+	ListenAddress string
 	// TLSConfig is used to configure a TLS server and client.
 	// You have to provide a peer certificate.
 	// We recommend using cfssl tool to create this certificates.
