@@ -80,7 +80,8 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 			MaxPool: 5,
 			Logger:  nil,
 		},
-		Enforcer: config.Enforcer,
+		Enforcer:   config.Enforcer,
+		RaftConfig: config.RaftConfig,
 	}
 	s, err := store.NewStore(storeConfig)
 	if err != nil {

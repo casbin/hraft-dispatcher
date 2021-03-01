@@ -39,6 +39,7 @@ type Store struct {
 	serverID      string
 
 	raft                   *raft.Raft
+	raftConfig             *raft.Config
 	networkTransportConfig *raft.NetworkTransportConfig
 	transport              raft.Transport
 	snapshotStore          raft.SnapshotStore
@@ -60,6 +61,7 @@ type Config struct {
 	Dir                    string
 	NetworkTransportConfig *raft.NetworkTransportConfig
 	Enforcer               casbin.IDistributedEnforcer
+	RaftConfig             *raft.Config
 }
 
 // NewStore return a instance of Store.
@@ -70,6 +72,7 @@ func NewStore(config *Config) (*Store, error) {
 		logger:                 zap.NewExample(),
 		networkTransportConfig: config.NetworkTransportConfig,
 		enforcer:               config.Enforcer,
+		raftConfig:             config.RaftConfig,
 	}
 
 	return s, nil
@@ -77,8 +80,17 @@ func NewStore(config *Config) (*Store, error) {
 
 // Start performs initialization and runs server
 func (s *Store) Start(enableBootstrap bool) error {
-	config := raft.DefaultConfig()
-	config.LocalID = raft.ServerID(s.serverID)
+	var config *raft.Config
+	if s.raftConfig == nil {
+		config = raft.DefaultConfig()
+		s.raftConfig = config
+	} else {
+		config = s.raftConfig
+	}
+
+	if len(config.LocalID) == 0 {
+		config.LocalID = raft.ServerID(s.serverID)
+	}
 
 	var transport raft.Transport
 	if s.inMemory {

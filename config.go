@@ -3,6 +3,7 @@ package hraftdispatcher
 import (
 	"crypto/tls"
 	"github.com/casbin/casbin/v2"
+	"github.com/hashicorp/raft"
 )
 
 // Config holds dispatcher config.
@@ -21,4 +22,6 @@ type Config struct {
 	// You have to provide a peer certificate.
 	// We recommend using cfssl tool to create this certificates.
 	TLSConfig *tls.Config
+	// RaftConfig provides any necessary configuration for the Raft server.
+	RaftConfig *raft.Config
 }
