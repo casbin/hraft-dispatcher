@@ -19,8 +19,3 @@ jobs:
 
       - name: Run go test
         run: make test
-
-      - name: Run example test
-        run:
-          - cd example
-          -
