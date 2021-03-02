@@ -47,6 +47,9 @@ type Store interface {
 	RemoveNode(serverID string) error
 	// Leader checks if it is a leader and returns network address.
 	Leader() (bool, string)
+
+	// Stats returns stats.
+	Stats() (map[string]interface{}, error)
 }
 
 // Service setups a HTTP service for forward data of raft node.

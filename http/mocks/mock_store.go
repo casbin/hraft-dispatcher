@@ -5,8 +5,8 @@
 package mocks
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	command "github.com/casbin/hraft-dispatcher/command"
+	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
 
@@ -158,4 +158,19 @@ func (m *MockStore) Leader() (bool, string) {
 func (mr *MockStoreMockRecorder) Leader() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Leader", reflect.TypeOf((*MockStore)(nil).Leader))
+}
+
+// Stats mocks base method
+func (m *MockStore) Stats() (map[string]interface{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Stats")
+	ret0, _ := ret[0].(map[string]interface{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Stats indicates an expected call of Stats
+func (mr *MockStoreMockRecorder) Stats() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stats", reflect.TypeOf((*MockStore)(nil).Stats))
 }
