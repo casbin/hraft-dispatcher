@@ -11,7 +11,7 @@ hraft-dispatcher is beta version.
 
 ### Installation
 
-Go version 1.14+ is required.
+Go version 1.14+ and Casbin vervsion 2.24+ is required.
 
 ```shell
 go get github.com/casbin/hraft-dispatcher
