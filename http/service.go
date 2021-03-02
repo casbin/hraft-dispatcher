@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"strings"
 	"time"
 
@@ -101,6 +102,13 @@ func NewService(ln net.Listener, tlsConfig *tls.Config, store Store) (*Service, 
 		r.Put("/join", s.handleJoinNode)
 		r.Put("/remove", s.handleRemoveNode)
 	})
+
+	// add pprof
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	s.srv = &http.Server{
 		Handler:           r,
