@@ -337,3 +337,17 @@ func (s *Store) Leader() (bool, string) {
 	_ = s.WaitLeader()
 	return s.raft.State() == raft.Leader, string(s.raft.Leader())
 }
+
+// Leader implements the http.Store interface.
+func (s *Store) Stats() (map[string]interface{}, error) {
+	result := map[string]interface{}{
+		"node_id":      s.serverID,
+		"node_address": s.networkTransportConfig.Stream.Addr(),
+		"leader": map[string]string{
+			"address": string(s.raft.Leader()),
+		},
+		"data_dir": s.dataDir,
+	}
+
+	return result, nil
+}

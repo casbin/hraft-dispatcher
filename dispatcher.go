@@ -273,3 +273,8 @@ func (h *HRaftDispatcher) RemoveNode(serverID string) error {
 func (h *HRaftDispatcher) Shutdown() error {
 	return h.shutdownFn()
 }
+
+// Stats is used to get stats of currently service.
+func (h *HRaftDispatcher) Stats()(map[string]interface{},error)  {
+	return h.store.Stats()
+}
