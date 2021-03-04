@@ -26,6 +26,23 @@ When the leader node starts for the first time, you can add the default policy t
 
 An example is provided [here](./example).
 
+### Security
+
+We support enable TLS on HTTP service and Raft service. 
+If you provide the TLS config is not nil, we will configure this to HTTP service and Raft service, and the HTTP upgrade HTTPS.
+
+when TLS is enabled, a peer certificate must be provided. It is recommended to use [cfssl](https://github.com/cloudflare/cfssl) to generate this certificate, our generate script is [here](./testdata/ca/generate.sh).
+
+Here is out configuration, you can find it in [example](./example/main.go):
+```go
+tls.Config{
+    RootCAs:      rootCAPool,
+    ClientCAs:    rootCAPool,
+    ClientAuth:   tls.RequireAndVerifyClientCert,
+    Certificates: []tls.Certificate{cert},
+}
+```
+
 ## Architecture
 
 hraft-dispatcher is a [dispatcher](https://casbin.org/docs/en/dispatchers) plug-in based on [hashicorp/raft](https://github.com/hashicorp/raft) implementation.
