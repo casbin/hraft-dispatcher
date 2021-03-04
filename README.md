@@ -1,7 +1,13 @@
 # hraft-dispatcher 
 
-A dispatcher based on Hashicorp's Raft for Casbin.
+[![Go Report Card](https://goreportcard.com/badge/github.com/casbin/hraft-dispatcher)](https://goreportcard.com/report/github.com/casbin/hraft-dispatcher)
+[![Build Status](https://github.com/casbin/hraft-dispatcher/actions/workflows/main.yml/badge.svg)](https://github.com/casbin/hraft-dispatcher/actions?workflow=main)
+[![Godoc](https://godoc.org/github.com/casbin/hraft-dispatcher?status.svg)](https://pkg.go.dev/github.com/casbin/hraft-dispatcher)
+[![Release](https://img.shields.io/github/v/release/casbin/hraft-dispatcher)](https://github.com/casbin/hraft-dispatcher/releases)
+[![Sourcegraph](https://sourcegraph.com/github.com/casbin/hraft-dispatcher/-/badge.svg)](https://sourcegraph.com/github.com/casbin/hraft-dispatcher?badge)
+[![License](https://img.shields.io/github/license/casbin/hraft-dispatcher?color=blue)](https://github.com/casbin/hraft-dispatcher/blob/main/LICENSE)
 
+A dispatcher based on Hashicorp's Raft for Casbin.
 
 ## Project Status
 
