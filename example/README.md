@@ -8,13 +8,13 @@ Leader node:
 - HTTP service - 127.0.0.1:6780
 - Dispatcher
   - Raft service - 127.0.0.1:6781
-  - HTTPS service - 127.0.0.1:6782
+  - HTTP(S) service - 127.0.0.1:6781
     
 Follower node:
 - HTTP service - 127.0.0.1:6790
 - Dispatcher
-  - Raft service - 127.0.0.1:6791
-  - HTTPS service - 127.0.0.1:6792
+  - Raft service - 127.0.0.1:6781
+  - HTTP(S) service - 127.0.0.1:6781
 
 ### HTTP API
 
