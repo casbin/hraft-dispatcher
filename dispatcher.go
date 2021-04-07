@@ -60,6 +60,9 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 	} else {
 		ln, err = tls.Listen("tcp", config.ListenAddress, config.TLSConfig)
 	}
+	if err != nil {
+		return nil, err
+	}
 
 	mux := cmux.New(ln)
 	httpLn := mux.Match(cmux.HTTP1Fast())
@@ -275,6 +278,6 @@ func (h *HRaftDispatcher) Shutdown() error {
 }
 
 // Stats is used to get stats of currently service.
-func (h *HRaftDispatcher) Stats()(map[string]interface{},error)  {
+func (h *HRaftDispatcher) Stats() (map[string]interface{}, error) {
 	return h.store.Stats()
 }
