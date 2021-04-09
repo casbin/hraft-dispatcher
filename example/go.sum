@@ -13,6 +13,8 @@ github.com/casbin/casbin/v2 v2.25.6 h1:UAPudZTpXWjiOJFkPeZSgoxhxH94L+Hl1ZaMvuyfN
 github.com/casbin/casbin/v2 v2.25.6/go.mod h1:wUgota0cQbTXE6Vd+KWpg41726jFRi7upxio0sR+Xd0=
 github.com/casbin/hraft-dispatcher v0.0.6 h1:gPDtEV0zhavLyIsZU9NS0Z8/eokDDSZ7SY0mo3/kzBI=
 github.com/casbin/hraft-dispatcher v0.0.6/go.mod h1:oFnGwEKMfsOg1T19BWPpYXlZM76E2puOrZzc41n6/RQ=
+github.com/casbin/hraft-dispatcher v0.0.7 h1:RH8zjEMLzsU/kn7zIOI4qojEOXtov7+SnK/p/PrycyM=
+github.com/casbin/hraft-dispatcher v0.0.7/go.mod h1:oFnGwEKMfsOg1T19BWPpYXlZM76E2puOrZzc41n6/RQ=
 github.com/cenkalti/backoff/v4 v4.1.0 h1:c8LkOFQTzuO0WBM/ae5HdGQuZPfPxp7lqBRwQRm4fSc=
 github.com/cenkalti/backoff/v4 v4.1.0/go.mod h1:scbssz8iZGpm3xbr14ovlUdkxfGXNInqkPWOWmG2CLw=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
