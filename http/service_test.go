@@ -101,7 +101,6 @@ func TestAddPolicy(t *testing.T) {
 		PType: "p",
 		Rules: []*command.StringArray{{Items: []string{"role:admin", "/", "*"}}},
 	}
-	store.EXPECT().Leader().Return(true, s.Addr())
 	store.EXPECT().AddPolicies(addPolicyRequest).Return(nil)
 
 	b, err := jsoniter.Marshal(addPolicyRequest)
@@ -139,7 +138,6 @@ func TestRemovePolicy(t *testing.T) {
 		PType: "p",
 		Rules: []*command.StringArray{{Items: []string{"role:admin", "/", "*"}}},
 	}
-	store.EXPECT().Leader().Return(true, s.Addr())
 	store.EXPECT().RemovePolicies(removePolicyRequest).Return(nil)
 
 	b, err := jsoniter.Marshal(removePolicyRequest)
@@ -178,7 +176,6 @@ func TestRemoveFilteredPolicy(t *testing.T) {
 		FieldIndex:  0,
 		FieldValues: []string{"role:admin"},
 	}
-	store.EXPECT().Leader().Return(true, s.Addr())
 	store.EXPECT().RemoveFilteredPolicy(removeFilteredPolicyRequest).Return(nil)
 
 	b, err := jsoniter.Marshal(removeFilteredPolicyRequest)
@@ -217,7 +214,6 @@ func TestUpdatePolicy(t *testing.T) {
 		OldRule: []string{"role:admin", "/", "*"},
 		NewRule: []string{"role:admin", "/admin", "*"},
 	}
-	store.EXPECT().Leader().Return(true, s.Addr())
 	store.EXPECT().UpdatePolicy(updatePolicyRequest).Return(nil)
 
 	b, err := jsoniter.Marshal(updatePolicyRequest)
@@ -250,7 +246,6 @@ func TestClearPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer s.Stop(context.Background())
 
-	store.EXPECT().Leader().Return(true, s.Addr())
 	store.EXPECT().ClearPolicy().Return(nil)
 
 	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("https://%s/policies/remove?type=all", s.Addr()), nil)
@@ -285,7 +280,6 @@ func TestJoinNode(t *testing.T) {
 		Id:      "test-main",
 		Address: "10.0.7.10",
 	}
-	store.EXPECT().Leader().Return(true, s.Addr())
 	store.EXPECT().JoinNode(addNodeRequest.Id, addNodeRequest.Address).Return(nil)
 
 	b, err := jsoniter.Marshal(addNodeRequest)
@@ -346,7 +340,6 @@ func TestRemoveNode(t *testing.T) {
 	removeNodeRequest := &command.RemoveNodeRequest{
 		Id: "test-main",
 	}
-	store.EXPECT().Leader().Return(true, s.Addr())
 	store.EXPECT().RemoveNode(removeNodeRequest.Id).Return(nil)
 
 	b, err := jsoniter.Marshal(removeNodeRequest)
