@@ -13,6 +13,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/raft"
+	"github.com/pkg/errors"
+
 	"github.com/casbin/hraft-dispatcher/command"
 	"github.com/casbin/hraft-dispatcher/http/mocks"
 	"github.com/golang/mock/gomock"
@@ -48,7 +51,7 @@ func TestRedirect(t *testing.T) {
 	assert.Equal(t, expectedURL, actualURL)
 }
 
-func TestLeader(t *testing.T) {
+func TestNotLeaderError(t *testing.T) {
 	ctl := gomock.NewController(t)
 	defer ctl.Finish()
 
@@ -58,17 +61,18 @@ func TestLeader(t *testing.T) {
 	s, err := NewService(ln, nil, store)
 	assert.NoError(t, err)
 
-	store.EXPECT().Leader().Return(true, "127.0.0.1:6790")
-	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	r := s.leaderMiddleware(nextHandler)
 	w := httptest.NewRecorder()
-	r.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPut, "https://testing", nil))
+	s.handleStoreResponse(nil, w, httptest.NewRequest(http.MethodPut, "https://testing", nil))
 	assert.Equal(t, w.Code, http.StatusOK)
+
+	w = httptest.NewRecorder()
+	s.handleStoreResponse(errors.New("test error"), w, httptest.NewRequest(http.MethodPut, "https://testing", nil))
+	assert.Equal(t, w.Code, http.StatusServiceUnavailable)
 
 	store.EXPECT().Leader().Return(false, "127.0.0.1:6790")
 	w = httptest.NewRecorder()
-	r.ServeHTTP(w, httptest.NewRequest(http.MethodPut, "https://testing", nil))
-	assert.Equal(t, w.Header().Get("Location"), "https://127.0.0.1:6790")
+	s.handleStoreResponse(raft.ErrNotLeader, w, httptest.NewRequest(http.MethodPut, "https://testing/add", nil))
+	assert.Equal(t, w.Header().Get("Location"), "https://127.0.0.1:6790/add")
 	assert.Equal(t, w.Code, http.StatusTemporaryRedirect)
 }
 

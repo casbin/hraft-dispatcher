@@ -12,13 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
-
-	jsoniter "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 
+	"github.com/hashicorp/raft"
+
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/go-chi/chi"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
 	"github.com/casbin/hraft-dispatcher/command"
 
@@ -93,12 +95,12 @@ func NewService(ln net.Listener, tlsConfig *tls.Config, store Store) (*Service, 
 	}
 
 	r := chi.NewRouter()
-	r.With(s.leaderMiddleware).Route("/policies", func(r chi.Router) {
+	r.Route("/policies", func(r chi.Router) {
 		r.Put("/add", s.handleAddPolicy)
 		r.Put("/update", s.handleUpdatePolicy)
 		r.Put("/remove", s.handleRemovePolicy)
 	})
-	r.With(s.leaderMiddleware).Route("/nodes", func(r chi.Router) {
+	r.Route("/nodes", func(r chi.Router) {
 		r.Put("/join", s.handleJoinNode)
 		r.Put("/remove", s.handleRemoveNode)
 	})
@@ -125,25 +127,6 @@ func NewService(ln net.Listener, tlsConfig *tls.Config, store Store) (*Service, 
 	return s, nil
 }
 
-// leaderMiddleware checks whether the current node is the leader.
-// If this current node is not a leader, the request is forwarded to the leader node.
-func (s *Service) leaderMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		isLeader, leaderAddr := s.store.Leader()
-		if !isLeader {
-			if len(leaderAddr) == 0 {
-				s.logger.Error("failed to get the leader address")
-				w.WriteHeader(http.StatusServiceUnavailable)
-				return
-			}
-			redirectURL := s.getRedirectURL(r, leaderAddr)
-			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 // Start starts this service.
 // It always returns a non-nil error. After Shutdown or Close, the returned error is http.ErrServerClosed.
 func (s *Service) Start() error {
@@ -151,12 +134,10 @@ func (s *Service) Start() error {
 		var err error
 		if s.tlsConfig == nil {
 			s.logger.Info(fmt.Sprintf("listening and serving HTTP on %s", s.ln.Addr()))
-			err = s.srv.Serve(s.ln)
 		} else {
 			s.logger.Info(fmt.Sprintf("listening and serving HTTPS on %s", s.ln.Addr()))
-			err = s.srv.Serve(s.ln)
-			err = s.srv.ServeTLS(s.ln, "", "")
 		}
+		err = s.srv.Serve(s.ln)
 		if err != nil && err != http.ErrServerClosed {
 			s.logger.Error("unable to serve http", zap.Error(err))
 		}
@@ -208,9 +189,30 @@ func (s *Service) GetScheme() string {
 	return scheme
 }
 
-// handleNodes handles request of nodes.
-func (s *Service) handleNodes(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusServiceUnavailable)
+// handleStoreResponse checks the error returned by store.
+// If the error is nil, the server returns http.StatusOK.
+// If the error is raft.ErrNotLeader, the server forward the request to the leader node,
+// otherwise the server returns http.StatusServiceUnavailable.
+func (s *Service) handleStoreResponse(err error, w http.ResponseWriter, r *http.Request) {
+	if err == nil {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if err == raft.ErrNotLeader {
+		isLeader, leaderAddr := s.store.Leader()
+		if !isLeader {
+			if len(leaderAddr) == 0 {
+				s.logger.Error("failed to get the leader address")
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			}
+			redirectURL := s.getRedirectURL(r, leaderAddr)
+			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+			return
+		}
+	} else {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+	}
 }
 
 // handleAddPolicy handles the request to add a set of rules.
@@ -227,10 +229,7 @@ func (s *Service) handleAddPolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = s.store.AddPolicies(&cmd)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		return
-	}
+	s.handleStoreResponse(err, w, r)
 }
 
 // handleRemovePolicy handles the request to remove a set of rules.
@@ -239,10 +238,7 @@ func (s *Service) handleRemovePolicy(w http.ResponseWriter, r *http.Request) {
 	switch removeType {
 	case "all":
 		err := s.store.ClearPolicy()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+		s.handleStoreResponse(err, w, r)
 	case "filtered":
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -256,10 +252,7 @@ func (s *Service) handleRemovePolicy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err = s.store.RemoveFilteredPolicy(&cmd)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+		s.handleStoreResponse(err, w, r)
 	case "":
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -273,10 +266,7 @@ func (s *Service) handleRemovePolicy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err = s.store.RemovePolicies(&cmd)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			return
-		}
+		s.handleStoreResponse(err, w, r)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -299,10 +289,7 @@ func (s *Service) handleUpdatePolicy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err = s.store.UpdatePolicies(&cmd)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			return
-		}
+		s.handleStoreResponse(err, w, r)
 	case "":
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -316,10 +303,7 @@ func (s *Service) handleUpdatePolicy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		err = s.store.UpdatePolicy(&cmd)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusServiceUnavailable)
-			return
-		}
+		s.handleStoreResponse(err, w, r)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -338,10 +322,7 @@ func (s *Service) handleJoinNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = s.store.JoinNode(cmd.Id, cmd.Address)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		return
-	}
+	s.handleStoreResponse(err, w, r)
 }
 
 func (s *Service) handleRemoveNode(w http.ResponseWriter, r *http.Request) {
@@ -357,10 +338,7 @@ func (s *Service) handleRemoveNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = s.store.RemoveNode(cmd.Id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusServiceUnavailable)
-		return
-	}
+	s.handleStoreResponse(err, w, r)
 }
 
 func (s *Service) Addr() string {
