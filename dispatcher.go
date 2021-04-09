@@ -3,6 +3,7 @@ package hraftdispatcher
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"github.com/soheilhy/cmux"
 	"net"
 
@@ -53,8 +54,20 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 
 	logger := zap.NewExample()
 
+	// check ListenAddress is network address
+	listenAddress, err := net.ResolveTCPAddr("tcp", config.ListenAddress)
+	if err != nil {
+		return nil, err
+	}
+	if listenAddress.IP == nil {
+		return nil, errors.New("host is omitted in ListenAddress")
+	}
+	ip := net.ParseIP(listenAddress.IP.String())
+	if ip != nil && ip.IsUnspecified() {
+		return nil, fmt.Errorf("cannot use unspecified IP %s", ip)
+	}
+
 	var ln net.Listener
-	var err error
 	if config.TLSConfig == nil {
 		ln, err = net.Listen("tcp", config.ListenAddress)
 	} else {
@@ -71,7 +84,6 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 
 	streamLayer, err := store.NewTCPStreamLayer(raftLn, config.TLSConfig)
 	if err != nil {
-		logger.Error(err.Error())
 		return nil, err
 	}
 

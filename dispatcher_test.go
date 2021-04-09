@@ -3,6 +3,7 @@ package hraftdispatcher
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"github.com/casbin/hraft-dispatcher/store/mocks"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -528,4 +529,28 @@ m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act
 	e.SetDispatcher(dispatcher)
 
 	return e, dispatcher, nil
+}
+
+func TestNewHRaftDispatcher(t *testing.T) {
+	_, err := NewHRaftDispatcher(&Config{
+		Enforcer:      &mocks.MockIDistributedEnforcer{},
+		ServerID:      "test",
+		JoinAddress:   "",
+		DataDir:       "/tmp/hraft-dispatcher",
+		ListenAddress: ":6780",
+		TLSConfig:     nil,
+		RaftConfig:    nil,
+	})
+	assert.EqualError(t, err, "host is omitted in ListenAddress")
+
+	_, err = NewHRaftDispatcher(&Config{
+		Enforcer:      &mocks.MockIDistributedEnforcer{},
+		ServerID:      "test",
+		JoinAddress:   "",
+		DataDir:       "/tmp/hraft-dispatcher",
+		ListenAddress: "0.0.0.0:6780",
+		TLSConfig:     nil,
+		RaftConfig:    nil,
+	})
+	assert.EqualError(t, err, "cannot use unspecified IP 0.0.0.0")
 }
