@@ -130,6 +130,7 @@ func TestStore_SingleNode(t *testing.T) {
 
 	enforcer := mocks.NewMockIDistributedEnforcer(ctl)
 	raftID := "node-leader"
+	enforcer.EXPECT().ClearPolicySelf(nil)
 
 	raftAddress := GetLocalIP() + ":6790"
 
@@ -253,11 +254,13 @@ func TestStore_MultipleNode(t *testing.T) {
 	leaderCtl := gomock.NewController(t)
 	defer leaderCtl.Finish()
 	leaderEnforcer := mocks.NewMockIDistributedEnforcer(leaderCtl)
+	leaderEnforcer.EXPECT().ClearPolicySelf(nil)
 
 	// mock follower
 	followerCtl := gomock.NewController(t)
 	defer followerCtl.Finish()
 	followerEnforcer := mocks.NewMockIDistributedEnforcer(followerCtl)
+	followerEnforcer.EXPECT().ClearPolicySelf(nil)
 
 	localIP := GetLocalIP()
 	leaderAddress := localIP + ":6790"

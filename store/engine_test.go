@@ -24,6 +24,7 @@ func TestPolicyOperator_AddPolicies(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -42,6 +43,7 @@ func TestPolicyOperator_RemovePolicies(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -60,6 +62,7 @@ func TestPolicyOperator_RemoveFilteredPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -78,6 +81,7 @@ func TestPolicyOperator_UpdatePolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -96,6 +100,7 @@ func TestPolicyOperator_LoadPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -120,6 +125,7 @@ func TestPolicyOperator_Backup_Restore(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 

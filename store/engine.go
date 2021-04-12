@@ -46,6 +46,11 @@ func NewPolicyOperator(path string, e casbin.IDistributedEnforcer) (*PolicyOpera
 		return nil, errors.Wrapf(err, "failed to open bolt file")
 	}
 
+	err := p.LoadPolicy()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to load policy from bolt")
+	}
+
 	return p, nil
 }
 
@@ -173,7 +178,7 @@ func (p *PolicyOperator) LoadPolicy() error {
 		return err
 	})
 	if err != nil {
-		p.logger.Error("failed to persist to database", zap.Error(err))
+		p.logger.Error("failed to load policy from database", zap.Error(err))
 	}
 
 	return err
