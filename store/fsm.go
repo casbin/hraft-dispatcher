@@ -56,6 +56,12 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		err = f.policyOperator.AddPolicies(request.Sec, request.PType, rules)
 		if err != nil {
 			f.logger.Error("apply the add policies request failed", zap.Error(err), zap.String("request", request.String()))
+		} else {
+			f.logger.Info("add policies request applied",
+				zap.String("sec", request.Sec),
+				zap.String("pType", request.PType),
+				zap.Any("rules", rules),
+			)
 		}
 		return err
 	case command.Command_COMMAND_TYPE_REMOVE_POLICIES:
@@ -72,6 +78,12 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		err = f.policyOperator.RemovePolicies(request.Sec, request.PType, rules)
 		if err != nil {
 			f.logger.Error("apply the remove policies request failed", zap.Error(err), zap.String("request", request.String()))
+		} else {
+			f.logger.Info("remove policies request applied",
+				zap.String("sec", request.Sec),
+				zap.String("pType", request.PType),
+				zap.Any("rules", rules),
+			)
 		}
 		return err
 	case command.Command_COMMAND_TYPE_REMOVE_FILTERED_POLICY:
@@ -84,6 +96,13 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		err = f.policyOperator.RemoveFilteredPolicy(request.Sec, request.PType, int(request.FieldIndex), request.FieldValues...)
 		if err != nil {
 			f.logger.Error("apply the remove filtered policy request failed", zap.Error(err), zap.String("request", request.String()))
+		} else {
+			f.logger.Info("remove filtered policy request applied",
+				zap.String("sec", request.Sec),
+				zap.String("pType", request.PType),
+				zap.Int32("fieldIndex", request.FieldIndex),
+				zap.Any("fieldValues", request.FieldValues),
+			)
 		}
 		return err
 	case command.Command_COMMAND_TYPE_UPDATE_POLICY:
@@ -96,6 +115,13 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		err = f.policyOperator.UpdatePolicy(request.Sec, request.PType, request.OldRule, request.NewRule)
 		if err != nil {
 			f.logger.Error("apply the update policy request failed", zap.Error(err), zap.String("request", request.String()))
+		} else {
+			f.logger.Info("update policy request applied",
+				zap.String("sec", request.Sec),
+				zap.String("pType", request.PType),
+				zap.Any("oldRule", request.OldRule),
+				zap.Any("newRule", request.NewRule),
+			)
 		}
 		return err
 	case command.Command_COMMAND_TYPE_UPDATE_POLICIES:
@@ -117,12 +143,21 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 		err = f.policyOperator.UpdatePolicies(request.Sec, request.PType, oldRules, newRules)
 		if err != nil {
 			f.logger.Error("apply the update policies request failed", zap.Error(err), zap.String("request", request.String()))
+		} else {
+			f.logger.Info("update policies request applied",
+				zap.String("sec", request.Sec),
+				zap.String("pType", request.PType),
+				zap.Any("oldRules", request.OldRules),
+				zap.Any("newRules", request.NewRules),
+			)
 		}
 		return err
 	case command.Command_COMMAND_TYPE_CLEAR_POLICY:
 		err := f.policyOperator.ClearPolicy()
 		if err != nil {
 			f.logger.Error("apply the clear policy request failed", zap.Error(err))
+		} else {
+			f.logger.Info("clear policy request applied")
 		}
 		return err
 	default:
