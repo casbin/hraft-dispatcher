@@ -24,6 +24,7 @@ func TestPolicyOperator_AddPolicies(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -42,6 +43,7 @@ func TestPolicyOperator_RemovePolicies(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -60,6 +62,7 @@ func TestPolicyOperator_RemoveFilteredPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -78,6 +81,7 @@ func TestPolicyOperator_UpdatePolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -96,6 +100,7 @@ func TestPolicyOperator_LoadPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -106,7 +111,7 @@ func TestPolicyOperator_LoadPolicy(t *testing.T) {
 	e.EXPECT().ClearPolicySelf(nil)
 	e.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:admin", "/", "*"}})
 	e.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:user", "/", "GET"}})
-	err = p.LoadPolicy()
+	err = p.loadPolicy()
 	assert.NoError(t, err)
 }
 
@@ -120,6 +125,7 @@ func TestPolicyOperator_Backup_Restore(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
+	e.EXPECT().ClearPolicySelf(nil)
 	p, err := NewPolicyOperator(dir, e)
 	assert.NoError(t, err)
 
@@ -131,12 +137,9 @@ func TestPolicyOperator_Backup_Restore(t *testing.T) {
 	err = ioutil.WriteFile(path.Join(dir, "backup.db"), b, 0666)
 	assert.NoError(t, err)
 
-	err = p.Restore(ioutil.NopCloser(bytes.NewBuffer(b)))
-	assert.NoError(t, err)
-
 	e.EXPECT().ClearPolicySelf(nil)
 	e.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:admin", "/", "*"}})
 	e.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:user", "/", "GET"}})
-	err = p.LoadPolicy()
+	err = p.Restore(ioutil.NopCloser(bytes.NewBuffer(b)))
 	assert.NoError(t, err)
 }

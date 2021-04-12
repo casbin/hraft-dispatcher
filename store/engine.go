@@ -32,6 +32,7 @@ type PolicyOperator struct {
 	db       *bolt.DB
 	l        *sync.Mutex
 	logger   *zap.Logger
+	path     string
 }
 
 // NewPolicyOperator returns a PolicyOperator.
@@ -40,13 +41,23 @@ func NewPolicyOperator(path string, e casbin.IDistributedEnforcer) (*PolicyOpera
 		enforcer: e,
 		l:        &sync.Mutex{},
 		logger:   zap.NewExample(),
+		path:     path,
 	}
-	dbPath := filepath.Join(path, databaseFilename)
+	err := p.init()
+	return p, err
+}
+
+func (p *PolicyOperator) init() error {
+	dbPath := filepath.Join(p.path, databaseFilename)
 	if err := p.openDBFile(dbPath); err != nil {
-		return nil, errors.Wrapf(err, "failed to open bolt file")
+		return errors.Wrapf(err, "failed to open bolt file")
 	}
 
-	return p, nil
+	err := p.loadPolicy()
+	if err != nil {
+		return errors.Wrapf(err, "failed to load policy from bolt")
+	}
+	return nil
 }
 
 // openDBFile opens the bolt file.
@@ -101,13 +112,7 @@ func (p *PolicyOperator) Restore(rc io.ReadCloser) error {
 		return err
 	}
 
-	err = p.openDBFile(dbPath)
-	if err != nil {
-		p.logger.Error("failed to open the database file", zap.Error(err))
-		return err
-	}
-
-	return nil
+	return p.init()
 }
 
 // Backup writes the database to bytes with gzip.
@@ -147,11 +152,8 @@ func (p *PolicyOperator) createBucket(name []byte) error {
 	})
 }
 
-// LoadPolicy clears the policies held by enforcer, and loads policy from database.
-func (p *PolicyOperator) LoadPolicy() error {
-	p.l.Lock()
-	defer p.l.Unlock()
-
+// loadPolicy clears the policies held by enforcer, and loads policy from database.
+func (p *PolicyOperator) loadPolicy() error {
 	err := p.enforcer.ClearPolicySelf(nil)
 	if err != nil {
 		p.logger.Error("failed to call loadPolicy", zap.Error(err))
@@ -173,7 +175,7 @@ func (p *PolicyOperator) LoadPolicy() error {
 		return err
 	})
 	if err != nil {
-		p.logger.Error("failed to persist to database", zap.Error(err))
+		p.logger.Error("failed to load policy from database", zap.Error(err))
 	}
 
 	return err
