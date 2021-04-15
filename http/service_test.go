@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/hashicorp/raft"
 	"github.com/pkg/errors"
 
@@ -30,7 +32,7 @@ func TestNewService(t *testing.T) {
 	store := mocks.NewMockStore(ctl)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	s, err := NewService(ln, nil, store)
+	s, err := NewService(zap.NewExample(), ln, nil, store)
 	assert.NoError(t, err)
 	assert.NotNil(t, s)
 }
@@ -42,7 +44,7 @@ func TestRedirect(t *testing.T) {
 	store := mocks.NewMockStore(ctl)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	s, err := NewService(ln, nil, store)
+	s, err := NewService(zap.NewExample(), ln, nil, store)
 	assert.NoError(t, err)
 
 	r := httptest.NewRequest(http.MethodPut, "https://127.0.0.1:6971/policies/add", nil)
@@ -58,7 +60,7 @@ func TestNotLeaderError(t *testing.T) {
 	store := mocks.NewMockStore(ctl)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
-	s, err := NewService(ln, nil, store)
+	s, err := NewService(zap.NewExample(), ln, nil, store)
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -89,7 +91,7 @@ func TestAddPolicy(t *testing.T) {
 
 	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	s, err := NewService(ln, ts.TLS, store)
+	s, err := NewService(zap.NewExample(), ln, ts.TLS, store)
 	assert.NoError(t, err)
 
 	err = s.Start()
@@ -126,7 +128,7 @@ func TestRemovePolicy(t *testing.T) {
 
 	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	s, err := NewService(ln, ts.TLS, store)
+	s, err := NewService(zap.NewExample(), ln, ts.TLS, store)
 	assert.NoError(t, err)
 
 	err = s.Start()
@@ -163,7 +165,7 @@ func TestRemoveFilteredPolicy(t *testing.T) {
 
 	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	s, err := NewService(ln, ts.TLS, store)
+	s, err := NewService(zap.NewExample(), ln, ts.TLS, store)
 	assert.NoError(t, err)
 
 	err = s.Start()
@@ -201,7 +203,7 @@ func TestUpdatePolicy(t *testing.T) {
 
 	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	s, err := NewService(ln, ts.TLS, store)
+	s, err := NewService(zap.NewExample(), ln, ts.TLS, store)
 	assert.NoError(t, err)
 
 	err = s.Start()
@@ -239,7 +241,7 @@ func TestClearPolicy(t *testing.T) {
 
 	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	s, err := NewService(ln, ts.TLS, store)
+	s, err := NewService(zap.NewExample(), ln, ts.TLS, store)
 	assert.NoError(t, err)
 
 	err = s.Start()
@@ -269,7 +271,7 @@ func TestJoinNode(t *testing.T) {
 
 	ln, err := tls.Listen("tcp", "127.0.0.1:0", ts.TLS)
 	assert.NoError(t, err)
-	s, err := NewService(ln, ts.TLS, store)
+	s, err := NewService(zap.NewExample(), ln, ts.TLS, store)
 	assert.NoError(t, err)
 
 	err = s.Start()
@@ -330,7 +332,7 @@ func TestRemoveNode(t *testing.T) {
 	assert.NoError(t, err)
 
 	<-time.After(3 * time.Second)
-	s, err := NewService(ln, ts.TLS, store)
+	s, err := NewService(zap.NewExample(), ln, ts.TLS, store)
 	assert.NoError(t, err)
 
 	err = s.Start()

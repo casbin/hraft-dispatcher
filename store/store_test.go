@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/casbin/casbin/v2"
 
 	"github.com/casbin/hraft-dispatcher/command"
@@ -130,8 +132,6 @@ func TestStore_SingleNode(t *testing.T) {
 
 	enforcer := mocks.NewMockIDistributedEnforcer(ctl)
 	raftID := "node-leader"
-	enforcer.EXPECT().ClearPolicySelf(nil)
-
 	raftAddress := GetLocalIP() + ":6790"
 
 	store, err := newStore(enforcer, raftID, raftAddress, true)
@@ -254,13 +254,11 @@ func TestStore_MultipleNode(t *testing.T) {
 	leaderCtl := gomock.NewController(t)
 	defer leaderCtl.Finish()
 	leaderEnforcer := mocks.NewMockIDistributedEnforcer(leaderCtl)
-	leaderEnforcer.EXPECT().ClearPolicySelf(nil)
 
 	// mock follower
 	followerCtl := gomock.NewController(t)
 	defer followerCtl.Finish()
 	followerEnforcer := mocks.NewMockIDistributedEnforcer(followerCtl)
-	followerEnforcer.EXPECT().ClearPolicySelf(nil)
 
 	localIP := GetLocalIP()
 	leaderAddress := localIP + ":6790"
@@ -446,7 +444,7 @@ func newStore(enforcer casbin.IDistributedEnforcer, id string, address string, e
 		return nil, err
 	}
 
-	store, err := NewStore(&Config{
+	store, err := NewStore(zap.NewExample(), &Config{
 		ID:  id,
 		Dir: dir,
 		NetworkTransportConfig: &raft.NetworkTransportConfig{

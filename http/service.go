@@ -66,7 +66,7 @@ type Service struct {
 }
 
 // NewService creates a Service.
-func NewService(ln net.Listener, tlsConfig *tls.Config, store Store) (*Service, error) {
+func NewService(logger *zap.Logger, ln net.Listener, tlsConfig *tls.Config, store Store) (*Service, error) {
 	if ln == nil {
 		return nil, errors.New("net.Listener is provided")
 	}
@@ -87,7 +87,7 @@ func NewService(ln net.Listener, tlsConfig *tls.Config, store Store) (*Service, 
 	}
 
 	s := &Service{
-		logger:     zap.NewExample(),
+		logger:     logger,
 		store:      store,
 		httpClient: httpClient,
 		ln:         ln,

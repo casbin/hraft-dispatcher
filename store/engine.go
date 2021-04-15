@@ -35,11 +35,11 @@ type PolicyOperator struct {
 }
 
 // NewPolicyOperator returns a PolicyOperator.
-func NewPolicyOperator(path string, e casbin.IDistributedEnforcer) (*PolicyOperator, error) {
+func NewPolicyOperator(logger *zap.Logger, path string, e casbin.IDistributedEnforcer) (*PolicyOperator, error) {
 	p := &PolicyOperator{
 		enforcer: e,
 		l:        &sync.Mutex{},
-		logger:   zap.NewExample(),
+		logger:   logger,
 	}
 	dbPath := filepath.Join(path, databaseFilename)
 	if err := p.openDBFile(dbPath); err != nil {

@@ -65,11 +65,11 @@ type Config struct {
 }
 
 // NewStore return a instance of Store.
-func NewStore(config *Config) (*Store, error) {
+func NewStore(logger *zap.Logger, config *Config) (*Store, error) {
 	s := &Store{
 		dataDir:                config.Dir,
 		serverID:               config.ID,
-		logger:                 zap.NewExample(),
+		logger:                 logger,
 		networkTransportConfig: config.NetworkTransportConfig,
 		enforcer:               config.Enforcer,
 		raftConfig:             config.RaftConfig,
@@ -130,7 +130,7 @@ func (s *Store) Start(enableBootstrap bool) error {
 		s.stableStore = boltDB
 	}
 
-	fsm, err := NewFSM(s.dataDir, s.enforcer)
+	fsm, err := NewFSM(s.logger, s.dataDir, s.enforcer)
 	if err != nil {
 		s.logger.Error("failed to new fsm", zap.Error(err))
 		return err

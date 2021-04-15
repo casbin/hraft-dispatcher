@@ -20,14 +20,14 @@ type FSM struct {
 }
 
 // NewFSM returns a FSM.
-func NewFSM(path string, enforcer casbin.IDistributedEnforcer) (*FSM, error) {
-	p, err := NewPolicyOperator(path, enforcer)
+func NewFSM(logger *zap.Logger, path string, enforcer casbin.IDistributedEnforcer) (*FSM, error) {
+	p, err := NewPolicyOperator(logger, path, enforcer)
 	if err != nil {
 		return nil, err
 	}
 
 	f := &FSM{
-		logger:         zap.NewExample().Named("FSM"),
+		logger:         logger,
 		policyOperator: p,
 	}
 	return f, err

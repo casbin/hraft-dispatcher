@@ -7,6 +7,8 @@ import (
 	"path"
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/casbin/hraft-dispatcher/store/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +26,7 @@ func TestPolicyOperator_AddPolicies(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	e.EXPECT().ClearPolicySelf(nil)
-	p, err := NewPolicyOperator(dir, e)
+	p, err := NewPolicyOperator(zap.NewExample(), dir, e)
 	assert.NoError(t, err)
 
 	e.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}).Return([][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}, nil)
@@ -43,8 +44,7 @@ func TestPolicyOperator_RemovePolicies(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	e.EXPECT().ClearPolicySelf(nil)
-	p, err := NewPolicyOperator(dir, e)
+	p, err := NewPolicyOperator(zap.NewExample(), dir, e)
 	assert.NoError(t, err)
 
 	e.EXPECT().RemovePoliciesSelf(nil, "p", "p", [][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}).Return([][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}, nil)
@@ -62,8 +62,7 @@ func TestPolicyOperator_RemoveFilteredPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	e.EXPECT().ClearPolicySelf(nil)
-	p, err := NewPolicyOperator(dir, e)
+	p, err := NewPolicyOperator(zap.NewExample(), dir, e)
 	assert.NoError(t, err)
 
 	e.EXPECT().RemoveFilteredPolicySelf(nil, "p", "p", 0, "role:user").Return([][]string{{"role:user", "/", "GET"}}, nil)
@@ -81,8 +80,7 @@ func TestPolicyOperator_UpdatePolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	e.EXPECT().ClearPolicySelf(nil)
-	p, err := NewPolicyOperator(dir, e)
+	p, err := NewPolicyOperator(zap.NewExample(), dir, e)
 	assert.NoError(t, err)
 
 	e.EXPECT().UpdatePolicySelf(nil, "p", "p", []string{"role:admin", "/", "*"}, []string{"role:admin", "/admin", "*"}).Return(true, nil)
@@ -100,8 +98,7 @@ func TestPolicyOperator_LoadPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	e.EXPECT().ClearPolicySelf(nil)
-	p, err := NewPolicyOperator(dir, e)
+	p, err := NewPolicyOperator(zap.NewExample(), dir, e)
 	assert.NoError(t, err)
 
 	e.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}).Return([][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}, nil)
@@ -125,8 +122,7 @@ func TestPolicyOperator_Backup_Restore(t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	e.EXPECT().ClearPolicySelf(nil)
-	p, err := NewPolicyOperator(dir, e)
+	p, err := NewPolicyOperator(zap.NewExample(), dir, e)
 	assert.NoError(t, err)
 
 	e.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}).Return([][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}, nil)

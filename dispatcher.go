@@ -32,6 +32,11 @@ type HRaftDispatcher struct {
 
 // NewHRaftDispatcher returns a HRaftDispatcher.
 func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
+	return NewHRaftDispatcherWithLogger(config, zap.NewExample())
+}
+
+// NewHRaftDispatcher returns a HRaftDispatcher.
+func NewHRaftDispatcherWithLogger(config *Config, logger *zap.Logger) (*HRaftDispatcher, error) {
 	if config == nil {
 		return nil, errors.New("config is not provided")
 	}
@@ -52,7 +57,9 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 		config.ServerID = config.ListenAddress
 	}
 
-	logger := zap.NewExample()
+	if logger == nil {
+		return nil, errors.New("no logger provided")
+	}
 
 	// check ListenAddress is network address
 	listenAddress, err := net.ResolveTCPAddr("tcp", config.ListenAddress)
@@ -98,7 +105,7 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 		Enforcer:   config.Enforcer,
 		RaftConfig: config.RaftConfig,
 	}
-	s, err := store.NewStore(storeConfig)
+	s, err := store.NewStore(logger, storeConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, err
@@ -144,7 +151,7 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 		logger.Info("the current node has joined to existing cluster")
 	}
 
-	httpService, err := http.NewService(httpLn, config.TLSConfig, s)
+	httpService, err := http.NewService(logger, httpLn, config.TLSConfig, s)
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +191,8 @@ func NewHRaftDispatcher(config *Config) (*HRaftDispatcher, error) {
 
 	return h, nil
 }
+
+//
 
 //AddPolicies implements the persist.Dispatcher interface.
 func (h *HRaftDispatcher) AddPolicies(sec string, pType string, rules [][]string) error {
