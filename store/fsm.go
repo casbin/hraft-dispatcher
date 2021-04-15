@@ -27,13 +27,14 @@ func NewFSM(path string, enforcer casbin.IDistributedEnforcer) (*FSM, error) {
 	}
 
 	f := &FSM{
-		logger:         zap.NewExample(),
+		logger:         zap.NewExample().Named("FSM"),
 		policyOperator: p,
 	}
 	return f, err
 }
 
 // Apply applies log from raft.
+// It will parse the command of casbin from log, and pass the command to casbin.
 func (f *FSM) Apply(log *raft.Log) interface{} {
 	var cmd command.Command
 	err := proto.Unmarshal(log.Data, &cmd)
@@ -170,11 +171,13 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 // Restore is used to restore an FSM from a snapshot. It is not called
 // concurrently with any other command. The FSM must discard all previous
 // state.
+// When Raft starts, if the local snapshot exists, call Restore, otherwise
+// read log from logstore and pass it to Apply.
 func (f *FSM) Restore(rc io.ReadCloser) error {
-	f.logger.Info("start restore")
+	f.logger.Info("restore an FSM from the snapshot")
 	err := f.policyOperator.Restore(rc)
 	if err != nil {
-		f.logger.Error("failed to restore an FSM from a snapshot", zap.Error(err))
+		f.logger.Error("failed to restore an FSM from the snapshot", zap.Error(err))
 	}
 	return err
 }
@@ -186,6 +189,7 @@ func (f *FSM) Restore(rc io.ReadCloser) error {
 // the FSM should be implemented in a fashion that allows for concurrent
 // updates while a snapshot is happening.
 func (f *FSM) Snapshot() (raft.FSMSnapshot, error) {
+	f.logger.Info("save the snapshot to local")
 	b, err := f.policyOperator.Backup()
 	if err != nil {
 		f.logger.Error("failed to save the snapshot", zap.Error(err))

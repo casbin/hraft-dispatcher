@@ -32,7 +32,6 @@ type PolicyOperator struct {
 	db       *bolt.DB
 	l        *sync.Mutex
 	logger   *zap.Logger
-	path     string
 }
 
 // NewPolicyOperator returns a PolicyOperator.
@@ -41,23 +40,13 @@ func NewPolicyOperator(path string, e casbin.IDistributedEnforcer) (*PolicyOpera
 		enforcer: e,
 		l:        &sync.Mutex{},
 		logger:   zap.NewExample(),
-		path:     path,
 	}
-	err := p.init()
-	return p, err
-}
-
-func (p *PolicyOperator) init() error {
-	dbPath := filepath.Join(p.path, databaseFilename)
+	dbPath := filepath.Join(path, databaseFilename)
 	if err := p.openDBFile(dbPath); err != nil {
-		return errors.Wrapf(err, "failed to open bolt file")
+		return nil, errors.Wrapf(err, "failed to open bolt file")
 	}
 
-	err := p.loadPolicy()
-	if err != nil {
-		return errors.Wrapf(err, "failed to load policy from bolt")
-	}
-	return nil
+	return p, nil
 }
 
 // openDBFile opens the bolt file.
@@ -112,7 +101,18 @@ func (p *PolicyOperator) Restore(rc io.ReadCloser) error {
 		return err
 	}
 
-	return p.init()
+	err = p.openDBFile(dbPath)
+	if err != nil {
+		p.logger.Error("failed to open the database file", zap.Error(err))
+		return err
+	}
+
+	err = p.loadPolicy()
+	if err != nil {
+		p.logger.Error("failed to load policy from bolt", zap.Error(err))
+		return errors.Wrapf(err, "failed to load policy from bolt")
+	}
+	return nil
 }
 
 // Backup writes the database to bytes with gzip.
@@ -177,7 +177,7 @@ func (p *PolicyOperator) loadPolicy() error {
 	if err != nil {
 		p.logger.Error("failed to load policy from database", zap.Error(err))
 	}
-
+	p.logger.Info("load policy completed")
 	return err
 }
 
