@@ -4,8 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/soheilhy/cmux"
 	"net"
+
+	"github.com/soheilhy/cmux"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -251,6 +252,28 @@ func (h *HRaftDispatcher) UpdatePolicy(sec string, pType string, oldRule, newRul
 		NewRule: newRule,
 	}
 	return h.httpService.DoUpdatePolicyRequest(request)
+}
+
+// UpdateFilteredPolicies implements the persist.Dispatcher interface.
+func (h *HRaftDispatcher) UpdateFilteredPolicies(sec string, pType string, oldRules, newRules [][]string) error {
+	var olds []*command.StringArray
+	for _, rule := range oldRules {
+		var item = &command.StringArray{Items: rule}
+		olds = append(olds, item)
+	}
+
+	var news []*command.StringArray
+	for _, rule := range newRules {
+		var item = &command.StringArray{Items: rule}
+		news = append(news, item)
+	}
+	request := &command.UpdateFilteredPoliciesRequest{
+		Sec:      sec,
+		PType:    pType,
+		OldRules: olds,
+		NewRules: news,
+	}
+	return h.httpService.DoUpdateFilteredPoliciesRequest(request)
 }
 
 // UpdatePolicies implements the persist.Dispatcher interface.

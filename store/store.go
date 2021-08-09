@@ -311,6 +311,19 @@ func (s *Store) UpdatePolicies(request *command.UpdatePoliciesRequest) error {
 	return s.applyProtoMessage(cmd)
 }
 
+// UpdateFilteredPolicies implements the http.Store interface.
+func (s *Store) UpdateFilteredPolicies(request *command.UpdateFilteredPoliciesRequest) error {
+	data, err := proto.Marshal(request)
+	if err != nil {
+		return err
+	}
+	cmd := &command.Command{
+		Type: command.Command_COMMAND_TYPE_UPDATE_FILTERED_POLICIES,
+		Data: data,
+	}
+	return s.applyProtoMessage(cmd)
+}
+
 // ClearPolicy implements the http.Store interface.
 func (s *Store) ClearPolicy() error {
 	cmd := &command.Command{

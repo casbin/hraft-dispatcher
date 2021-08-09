@@ -383,6 +383,55 @@ func (p *PolicyOperator) UpdatePolicies(sec, pType string, oldRules, newRules []
 	return nil
 }
 
+//UpdateFilteredPolicies replaces a set of existing rule.
+func (p *PolicyOperator) UpdateFilteredPolicies(sec, pType string, oldRules, newRules [][]string) error {
+	p.l.Lock()
+	defer p.l.Unlock()
+
+	effected, err := p.enforcer.UpdatePoliciesSelf(nil, sec, pType, oldRules, newRules)
+	if err != nil {
+		p.logger.Error("failed to call UpdatePoliciesSelf", zap.Error(err))
+		return err
+	}
+	if effected == false {
+		return nil
+	}
+
+	err = p.db.Update(func(tx *bolt.Tx) error {
+		bkt := tx.Bucket(policyBucketName)
+
+		for _, newRule := range newRules {
+			newKey, err := newRuleBytes(sec, pType, newRule)
+			if err != nil {
+				return err
+			}
+			value, err := bkt.NextSequence()
+			if err != nil {
+				return err
+			}
+
+			err = bkt.Put(newKey, []byte(strconv.FormatUint(value, 10)))
+			if err != nil {
+				return err
+			}
+		}
+
+		for _, oldRule := range oldRules {
+			oldKey, err := newRuleBytes(sec, pType, oldRule)
+			if err != nil {
+				return err
+			}
+			return bkt.Delete(oldKey)
+		}
+		return nil
+	})
+	if err != nil {
+		p.logger.Error("failed to persist to database", zap.Error(err))
+	}
+
+	return nil
+}
+
 // ClearPolicy clears all rules.
 func (p *PolicyOperator) ClearPolicy() error {
 	p.l.Lock()
