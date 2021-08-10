@@ -5,35 +5,36 @@
 package mocks
 
 import (
+	reflect "reflect"
+
 	command "github.com/casbin/hraft-dispatcher/command"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockStore is a mock of Store interface
+// MockStore is a mock of Store interface.
 type MockStore struct {
 	ctrl     *gomock.Controller
 	recorder *MockStoreMockRecorder
 }
 
-// MockStoreMockRecorder is the mock recorder for MockStore
+// MockStoreMockRecorder is the mock recorder for MockStore.
 type MockStoreMockRecorder struct {
 	mock *MockStore
 }
 
-// NewMockStore creates a new mock instance
+// NewMockStore creates a new mock instance.
 func NewMockStore(ctrl *gomock.Controller) *MockStore {
 	mock := &MockStore{ctrl: ctrl}
 	mock.recorder = &MockStoreMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
-// AddPolicies mocks base method
+// AddPolicies mocks base method.
 func (m *MockStore) AddPolicies(request *command.AddPoliciesRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddPolicies", request)
@@ -41,69 +42,13 @@ func (m *MockStore) AddPolicies(request *command.AddPoliciesRequest) error {
 	return ret0
 }
 
-// AddPolicies indicates an expected call of AddPolicies
+// AddPolicies indicates an expected call of AddPolicies.
 func (mr *MockStoreMockRecorder) AddPolicies(request interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPolicies", reflect.TypeOf((*MockStore)(nil).AddPolicies), request)
 }
 
-// RemovePolicies mocks base method
-func (m *MockStore) RemovePolicies(request *command.RemovePoliciesRequest) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemovePolicies", request)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemovePolicies indicates an expected call of RemovePolicies
-func (mr *MockStoreMockRecorder) RemovePolicies(request interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicies", reflect.TypeOf((*MockStore)(nil).RemovePolicies), request)
-}
-
-// RemoveFilteredPolicy mocks base method
-func (m *MockStore) RemoveFilteredPolicy(request *command.RemoveFilteredPolicyRequest) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveFilteredPolicy", request)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveFilteredPolicy indicates an expected call of RemoveFilteredPolicy
-func (mr *MockStoreMockRecorder) RemoveFilteredPolicy(request interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFilteredPolicy", reflect.TypeOf((*MockStore)(nil).RemoveFilteredPolicy), request)
-}
-
-// UpdatePolicy mocks base method
-func (m *MockStore) UpdatePolicy(request *command.UpdatePolicyRequest) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePolicy", request)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdatePolicy indicates an expected call of UpdatePolicy
-func (mr *MockStoreMockRecorder) UpdatePolicy(request interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicy", reflect.TypeOf((*MockStore)(nil).UpdatePolicy), request)
-}
-
-// UpdatePolicies mocks base method
-func (m *MockStore) UpdatePolicies(request *command.UpdatePoliciesRequest) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePolicies", request)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdatePolicies indicates an expected call of UpdatePolicies
-func (mr *MockStoreMockRecorder) UpdatePolicies(request interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicies", reflect.TypeOf((*MockStore)(nil).UpdatePolicies), request)
-}
-
-// ClearPolicy mocks base method
+// ClearPolicy mocks base method.
 func (m *MockStore) ClearPolicy() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ClearPolicy")
@@ -111,13 +56,13 @@ func (m *MockStore) ClearPolicy() error {
 	return ret0
 }
 
-// ClearPolicy indicates an expected call of ClearPolicy
+// ClearPolicy indicates an expected call of ClearPolicy.
 func (mr *MockStoreMockRecorder) ClearPolicy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearPolicy", reflect.TypeOf((*MockStore)(nil).ClearPolicy))
 }
 
-// JoinNode mocks base method
+// JoinNode mocks base method.
 func (m *MockStore) JoinNode(serverID, address string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "JoinNode", serverID, address)
@@ -125,27 +70,13 @@ func (m *MockStore) JoinNode(serverID, address string) error {
 	return ret0
 }
 
-// JoinNode indicates an expected call of JoinNode
+// JoinNode indicates an expected call of JoinNode.
 func (mr *MockStoreMockRecorder) JoinNode(serverID, address interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JoinNode", reflect.TypeOf((*MockStore)(nil).JoinNode), serverID, address)
 }
 
-// RemoveNode mocks base method
-func (m *MockStore) RemoveNode(serverID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveNode", serverID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveNode indicates an expected call of RemoveNode
-func (mr *MockStoreMockRecorder) RemoveNode(serverID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveNode", reflect.TypeOf((*MockStore)(nil).RemoveNode), serverID)
-}
-
-// Leader mocks base method
+// Leader mocks base method.
 func (m *MockStore) Leader() (bool, string) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Leader")
@@ -154,13 +85,55 @@ func (m *MockStore) Leader() (bool, string) {
 	return ret0, ret1
 }
 
-// Leader indicates an expected call of Leader
+// Leader indicates an expected call of Leader.
 func (mr *MockStoreMockRecorder) Leader() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Leader", reflect.TypeOf((*MockStore)(nil).Leader))
 }
 
-// Stats mocks base method
+// RemoveFilteredPolicy mocks base method.
+func (m *MockStore) RemoveFilteredPolicy(request *command.RemoveFilteredPolicyRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveFilteredPolicy", request)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveFilteredPolicy indicates an expected call of RemoveFilteredPolicy.
+func (mr *MockStoreMockRecorder) RemoveFilteredPolicy(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFilteredPolicy", reflect.TypeOf((*MockStore)(nil).RemoveFilteredPolicy), request)
+}
+
+// RemoveNode mocks base method.
+func (m *MockStore) RemoveNode(serverID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveNode", serverID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveNode indicates an expected call of RemoveNode.
+func (mr *MockStoreMockRecorder) RemoveNode(serverID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveNode", reflect.TypeOf((*MockStore)(nil).RemoveNode), serverID)
+}
+
+// RemovePolicies mocks base method.
+func (m *MockStore) RemovePolicies(request *command.RemovePoliciesRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemovePolicies", request)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemovePolicies indicates an expected call of RemovePolicies.
+func (mr *MockStoreMockRecorder) RemovePolicies(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicies", reflect.TypeOf((*MockStore)(nil).RemovePolicies), request)
+}
+
+// Stats mocks base method.
 func (m *MockStore) Stats() (map[string]interface{}, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Stats")
@@ -169,8 +142,50 @@ func (m *MockStore) Stats() (map[string]interface{}, error) {
 	return ret0, ret1
 }
 
-// Stats indicates an expected call of Stats
+// Stats indicates an expected call of Stats.
 func (mr *MockStoreMockRecorder) Stats() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stats", reflect.TypeOf((*MockStore)(nil).Stats))
+}
+
+// UpdateFilteredPolicies mocks base method.
+func (m *MockStore) UpdateFilteredPolicies(request *command.UpdateFilteredPoliciesRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFilteredPolicies", request)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFilteredPolicies indicates an expected call of UpdateFilteredPolicies.
+func (mr *MockStoreMockRecorder) UpdateFilteredPolicies(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFilteredPolicies", reflect.TypeOf((*MockStore)(nil).UpdateFilteredPolicies), request)
+}
+
+// UpdatePolicies mocks base method.
+func (m *MockStore) UpdatePolicies(request *command.UpdatePoliciesRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePolicies", request)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePolicies indicates an expected call of UpdatePolicies.
+func (mr *MockStoreMockRecorder) UpdatePolicies(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicies", reflect.TypeOf((*MockStore)(nil).UpdatePolicies), request)
+}
+
+// UpdatePolicy mocks base method.
+func (m *MockStore) UpdatePolicy(request *command.UpdatePolicyRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePolicy", request)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdatePolicy indicates an expected call of UpdatePolicy.
+func (mr *MockStoreMockRecorder) UpdatePolicy(request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicy", reflect.TypeOf((*MockStore)(nil).UpdatePolicy), request)
 }

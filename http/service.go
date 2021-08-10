@@ -41,6 +41,8 @@ type Store interface {
 	UpdatePolicy(request *command.UpdatePolicyRequest) error
 	// UpdatePolicies updates a set of rules of policy.
 	UpdatePolicies(request *command.UpdatePoliciesRequest) error
+	// UpdateFilteredPolicies updates a set of rules of policy.
+	UpdateFilteredPolicies(request *command.UpdateFilteredPoliciesRequest) error
 	// ClearPolicy clears all policies.
 	ClearPolicy() error
 
@@ -290,6 +292,20 @@ func (s *Service) handleUpdatePolicy(w http.ResponseWriter, r *http.Request) {
 		}
 		err = s.store.UpdatePolicies(&cmd)
 		s.handleStoreResponse(err, w, r)
+	case "filtered":
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		var cmd command.UpdateFilteredPoliciesRequest
+		err = jsoniter.Unmarshal(data, &cmd)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		err = s.store.UpdateFilteredPolicies(&cmd)
+		s.handleStoreResponse(err, w, r)
 	case "":
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -445,6 +461,26 @@ func (s *Service) DoUpdatePolicyRequest(request *command.UpdatePolicyRequest) er
 		return errors.New(http.StatusText(http.StatusServiceUnavailable))
 	}
 
+	return nil
+}
+
+func (s *Service) DoUpdateFilteredPoliciesRequest(request *command.UpdateFilteredPoliciesRequest) error {
+	b, err := jsoniter.Marshal(request)
+	if err != nil {
+		return err
+	}
+	r, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s://%s/policies/update?type=filtered", s.GetScheme(), s.Addr()), bytes.NewBuffer(b))
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.httpClient.Do(r)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(http.StatusText(http.StatusServiceUnavailable))
+	}
 	return nil
 }
 

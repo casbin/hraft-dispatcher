@@ -41,6 +41,13 @@ message UpdatePoliciesRequest {
   repeated StringArray oldRules = 4;
 }
 
+message UpdateFilteredPoliciesRequest {
+  string sec = 1;
+  string pType = 2;
+  repeated StringArray newRules = 3;
+  repeated StringArray oldRules = 4;
+}
+
 message Command {
   enum Type {
     COMMAND_TYPE_ADD_POLICIES = 0;
@@ -48,8 +55,8 @@ message Command {
     COMMAND_TYPE_REMOVE_FILTERED_POLICY = 2;
     COMMAND_TYPE_UPDATE_POLICY = 3;
     COMMAND_TYPE_UPDATE_POLICIES = 4;
-
     COMMAND_TYPE_CLEAR_POLICY = 5;
+    COMMAND_TYPE_UPDATE_FILTERED_POLICIES = 6;
   }
 
   Type type = 1;

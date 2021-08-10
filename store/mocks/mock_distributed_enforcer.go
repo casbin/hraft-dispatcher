@@ -5,51 +5,52 @@
 package mocks
 
 import (
+	reflect "reflect"
+
 	govaluate "github.com/Knetic/govaluate"
-	effect "github.com/casbin/casbin/v2/effect"
+	effector "github.com/casbin/casbin/v2/effector"
 	model "github.com/casbin/casbin/v2/model"
 	persist "github.com/casbin/casbin/v2/persist"
 	rbac "github.com/casbin/casbin/v2/rbac"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
-// MockIDistributedEnforcer is a mock of IDistributedEnforcer interface
+// MockIDistributedEnforcer is a mock of IDistributedEnforcer interface.
 type MockIDistributedEnforcer struct {
 	ctrl     *gomock.Controller
 	recorder *MockIDistributedEnforcerMockRecorder
 }
 
-// MockIDistributedEnforcerMockRecorder is the mock recorder for MockIDistributedEnforcer
+// MockIDistributedEnforcerMockRecorder is the mock recorder for MockIDistributedEnforcer.
 type MockIDistributedEnforcerMockRecorder struct {
 	mock *MockIDistributedEnforcer
 }
 
-// NewMockIDistributedEnforcer creates a new mock instance
+// NewMockIDistributedEnforcer creates a new mock instance.
 func NewMockIDistributedEnforcer(ctrl *gomock.Controller) *MockIDistributedEnforcer {
 	mock := &MockIDistributedEnforcer{ctrl: ctrl}
 	mock.recorder = &MockIDistributedEnforcerMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIDistributedEnforcer) EXPECT() *MockIDistributedEnforcerMockRecorder {
 	return m.recorder
 }
 
-// AddFunction mocks base method
+// AddFunction mocks base method.
 func (m *MockIDistributedEnforcer) AddFunction(arg0 string, arg1 govaluate.ExpressionFunction) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "AddFunction", arg0, arg1)
 }
 
-// AddFunction indicates an expected call of AddFunction
+// AddFunction indicates an expected call of AddFunction.
 func (mr *MockIDistributedEnforcerMockRecorder) AddFunction(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFunction", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddFunction), arg0, arg1)
 }
 
-// AddGroupingPolicies mocks base method
+// AddGroupingPolicies mocks base method.
 func (m *MockIDistributedEnforcer) AddGroupingPolicies(arg0 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddGroupingPolicies", arg0)
@@ -58,13 +59,13 @@ func (m *MockIDistributedEnforcer) AddGroupingPolicies(arg0 [][]string) (bool, e
 	return ret0, ret1
 }
 
-// AddGroupingPolicies indicates an expected call of AddGroupingPolicies
+// AddGroupingPolicies indicates an expected call of AddGroupingPolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) AddGroupingPolicies(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddGroupingPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddGroupingPolicies), arg0)
 }
 
-// AddGroupingPolicy mocks base method
+// AddGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) AddGroupingPolicy(arg0 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -77,13 +78,13 @@ func (m *MockIDistributedEnforcer) AddGroupingPolicy(arg0 ...interface{}) (bool,
 	return ret0, ret1
 }
 
-// AddGroupingPolicy indicates an expected call of AddGroupingPolicy
+// AddGroupingPolicy indicates an expected call of AddGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) AddGroupingPolicy(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddGroupingPolicy), arg0...)
 }
 
-// AddNamedGroupingPolicies mocks base method
+// AddNamedGroupingPolicies mocks base method.
 func (m *MockIDistributedEnforcer) AddNamedGroupingPolicies(arg0 string, arg1 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddNamedGroupingPolicies", arg0, arg1)
@@ -92,13 +93,13 @@ func (m *MockIDistributedEnforcer) AddNamedGroupingPolicies(arg0 string, arg1 []
 	return ret0, ret1
 }
 
-// AddNamedGroupingPolicies indicates an expected call of AddNamedGroupingPolicies
+// AddNamedGroupingPolicies indicates an expected call of AddNamedGroupingPolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) AddNamedGroupingPolicies(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddNamedGroupingPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddNamedGroupingPolicies), arg0, arg1)
 }
 
-// AddNamedGroupingPolicy mocks base method
+// AddNamedGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) AddNamedGroupingPolicy(arg0 string, arg1 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -111,14 +112,14 @@ func (m *MockIDistributedEnforcer) AddNamedGroupingPolicy(arg0 string, arg1 ...i
 	return ret0, ret1
 }
 
-// AddNamedGroupingPolicy indicates an expected call of AddNamedGroupingPolicy
+// AddNamedGroupingPolicy indicates an expected call of AddNamedGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) AddNamedGroupingPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddNamedGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddNamedGroupingPolicy), varargs...)
 }
 
-// AddNamedPolicies mocks base method
+// AddNamedPolicies mocks base method.
 func (m *MockIDistributedEnforcer) AddNamedPolicies(arg0 string, arg1 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddNamedPolicies", arg0, arg1)
@@ -127,13 +128,13 @@ func (m *MockIDistributedEnforcer) AddNamedPolicies(arg0 string, arg1 [][]string
 	return ret0, ret1
 }
 
-// AddNamedPolicies indicates an expected call of AddNamedPolicies
+// AddNamedPolicies indicates an expected call of AddNamedPolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) AddNamedPolicies(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddNamedPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddNamedPolicies), arg0, arg1)
 }
 
-// AddNamedPolicy mocks base method
+// AddNamedPolicy mocks base method.
 func (m *MockIDistributedEnforcer) AddNamedPolicy(arg0 string, arg1 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -146,14 +147,14 @@ func (m *MockIDistributedEnforcer) AddNamedPolicy(arg0 string, arg1 ...interface
 	return ret0, ret1
 }
 
-// AddNamedPolicy indicates an expected call of AddNamedPolicy
+// AddNamedPolicy indicates an expected call of AddNamedPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) AddNamedPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddNamedPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddNamedPolicy), varargs...)
 }
 
-// AddPermissionForUser mocks base method
+// AddPermissionForUser mocks base method.
 func (m *MockIDistributedEnforcer) AddPermissionForUser(arg0 string, arg1 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -166,14 +167,14 @@ func (m *MockIDistributedEnforcer) AddPermissionForUser(arg0 string, arg1 ...str
 	return ret0, ret1
 }
 
-// AddPermissionForUser indicates an expected call of AddPermissionForUser
+// AddPermissionForUser indicates an expected call of AddPermissionForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) AddPermissionForUser(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPermissionForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddPermissionForUser), varargs...)
 }
 
-// AddPolicies mocks base method
+// AddPolicies mocks base method.
 func (m *MockIDistributedEnforcer) AddPolicies(arg0 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddPolicies", arg0)
@@ -182,13 +183,13 @@ func (m *MockIDistributedEnforcer) AddPolicies(arg0 [][]string) (bool, error) {
 	return ret0, ret1
 }
 
-// AddPolicies indicates an expected call of AddPolicies
+// AddPolicies indicates an expected call of AddPolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) AddPolicies(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddPolicies), arg0)
 }
 
-// AddPoliciesSelf mocks base method
+// AddPoliciesSelf mocks base method.
 func (m *MockIDistributedEnforcer) AddPoliciesSelf(arg0 func() bool, arg1, arg2 string, arg3 [][]string) ([][]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddPoliciesSelf", arg0, arg1, arg2, arg3)
@@ -197,13 +198,13 @@ func (m *MockIDistributedEnforcer) AddPoliciesSelf(arg0 func() bool, arg1, arg2 
 	return ret0, ret1
 }
 
-// AddPoliciesSelf indicates an expected call of AddPoliciesSelf
+// AddPoliciesSelf indicates an expected call of AddPoliciesSelf.
 func (mr *MockIDistributedEnforcerMockRecorder) AddPoliciesSelf(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPoliciesSelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddPoliciesSelf), arg0, arg1, arg2, arg3)
 }
 
-// AddPolicy mocks base method
+// AddPolicy mocks base method.
 func (m *MockIDistributedEnforcer) AddPolicy(arg0 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -216,13 +217,13 @@ func (m *MockIDistributedEnforcer) AddPolicy(arg0 ...interface{}) (bool, error) 
 	return ret0, ret1
 }
 
-// AddPolicy indicates an expected call of AddPolicy
+// AddPolicy indicates an expected call of AddPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) AddPolicy(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddPolicy), arg0...)
 }
 
-// AddRoleForUser mocks base method
+// AddRoleForUser mocks base method.
 func (m *MockIDistributedEnforcer) AddRoleForUser(arg0, arg1 string, arg2 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -235,14 +236,14 @@ func (m *MockIDistributedEnforcer) AddRoleForUser(arg0, arg1 string, arg2 ...str
 	return ret0, ret1
 }
 
-// AddRoleForUser indicates an expected call of AddRoleForUser
+// AddRoleForUser indicates an expected call of AddRoleForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) AddRoleForUser(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRoleForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddRoleForUser), varargs...)
 }
 
-// AddRoleForUserInDomain mocks base method
+// AddRoleForUserInDomain mocks base method.
 func (m *MockIDistributedEnforcer) AddRoleForUserInDomain(arg0, arg1, arg2 string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddRoleForUserInDomain", arg0, arg1, arg2)
@@ -251,13 +252,43 @@ func (m *MockIDistributedEnforcer) AddRoleForUserInDomain(arg0, arg1, arg2 strin
 	return ret0, ret1
 }
 
-// AddRoleForUserInDomain indicates an expected call of AddRoleForUserInDomain
+// AddRoleForUserInDomain indicates an expected call of AddRoleForUserInDomain.
 func (mr *MockIDistributedEnforcerMockRecorder) AddRoleForUserInDomain(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRoleForUserInDomain", reflect.TypeOf((*MockIDistributedEnforcer)(nil).AddRoleForUserInDomain), arg0, arg1, arg2)
 }
 
-// BuildRoleLinks mocks base method
+// BatchEnforce mocks base method.
+func (m *MockIDistributedEnforcer) BatchEnforce(arg0 [][]interface{}) ([]bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BatchEnforce", arg0)
+	ret0, _ := ret[0].([]bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BatchEnforce indicates an expected call of BatchEnforce.
+func (mr *MockIDistributedEnforcerMockRecorder) BatchEnforce(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BatchEnforce", reflect.TypeOf((*MockIDistributedEnforcer)(nil).BatchEnforce), arg0)
+}
+
+// BatchEnforceWithMatcher mocks base method.
+func (m *MockIDistributedEnforcer) BatchEnforceWithMatcher(arg0 string, arg1 [][]interface{}) ([]bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BatchEnforceWithMatcher", arg0, arg1)
+	ret0, _ := ret[0].([]bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BatchEnforceWithMatcher indicates an expected call of BatchEnforceWithMatcher.
+func (mr *MockIDistributedEnforcerMockRecorder) BatchEnforceWithMatcher(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BatchEnforceWithMatcher", reflect.TypeOf((*MockIDistributedEnforcer)(nil).BatchEnforceWithMatcher), arg0, arg1)
+}
+
+// BuildRoleLinks mocks base method.
 func (m *MockIDistributedEnforcer) BuildRoleLinks() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BuildRoleLinks")
@@ -265,25 +296,25 @@ func (m *MockIDistributedEnforcer) BuildRoleLinks() error {
 	return ret0
 }
 
-// BuildRoleLinks indicates an expected call of BuildRoleLinks
+// BuildRoleLinks indicates an expected call of BuildRoleLinks.
 func (mr *MockIDistributedEnforcerMockRecorder) BuildRoleLinks() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildRoleLinks", reflect.TypeOf((*MockIDistributedEnforcer)(nil).BuildRoleLinks))
 }
 
-// ClearPolicy mocks base method
+// ClearPolicy mocks base method.
 func (m *MockIDistributedEnforcer) ClearPolicy() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "ClearPolicy")
 }
 
-// ClearPolicy indicates an expected call of ClearPolicy
+// ClearPolicy indicates an expected call of ClearPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) ClearPolicy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).ClearPolicy))
 }
 
-// ClearPolicySelf mocks base method
+// ClearPolicySelf mocks base method.
 func (m *MockIDistributedEnforcer) ClearPolicySelf(arg0 func() bool) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ClearPolicySelf", arg0)
@@ -291,13 +322,13 @@ func (m *MockIDistributedEnforcer) ClearPolicySelf(arg0 func() bool) error {
 	return ret0
 }
 
-// ClearPolicySelf indicates an expected call of ClearPolicySelf
+// ClearPolicySelf indicates an expected call of ClearPolicySelf.
 func (mr *MockIDistributedEnforcerMockRecorder) ClearPolicySelf(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearPolicySelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).ClearPolicySelf), arg0)
 }
 
-// DeletePermission mocks base method
+// DeletePermission mocks base method.
 func (m *MockIDistributedEnforcer) DeletePermission(arg0 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -310,13 +341,13 @@ func (m *MockIDistributedEnforcer) DeletePermission(arg0 ...string) (bool, error
 	return ret0, ret1
 }
 
-// DeletePermission indicates an expected call of DeletePermission
+// DeletePermission indicates an expected call of DeletePermission.
 func (mr *MockIDistributedEnforcerMockRecorder) DeletePermission(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePermission", reflect.TypeOf((*MockIDistributedEnforcer)(nil).DeletePermission), arg0...)
 }
 
-// DeletePermissionForUser mocks base method
+// DeletePermissionForUser mocks base method.
 func (m *MockIDistributedEnforcer) DeletePermissionForUser(arg0 string, arg1 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -329,14 +360,14 @@ func (m *MockIDistributedEnforcer) DeletePermissionForUser(arg0 string, arg1 ...
 	return ret0, ret1
 }
 
-// DeletePermissionForUser indicates an expected call of DeletePermissionForUser
+// DeletePermissionForUser indicates an expected call of DeletePermissionForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) DeletePermissionForUser(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePermissionForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).DeletePermissionForUser), varargs...)
 }
 
-// DeletePermissionsForUser mocks base method
+// DeletePermissionsForUser mocks base method.
 func (m *MockIDistributedEnforcer) DeletePermissionsForUser(arg0 string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeletePermissionsForUser", arg0)
@@ -345,13 +376,13 @@ func (m *MockIDistributedEnforcer) DeletePermissionsForUser(arg0 string) (bool, 
 	return ret0, ret1
 }
 
-// DeletePermissionsForUser indicates an expected call of DeletePermissionsForUser
+// DeletePermissionsForUser indicates an expected call of DeletePermissionsForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) DeletePermissionsForUser(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePermissionsForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).DeletePermissionsForUser), arg0)
 }
 
-// DeleteRole mocks base method
+// DeleteRole mocks base method.
 func (m *MockIDistributedEnforcer) DeleteRole(arg0 string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteRole", arg0)
@@ -360,13 +391,13 @@ func (m *MockIDistributedEnforcer) DeleteRole(arg0 string) (bool, error) {
 	return ret0, ret1
 }
 
-// DeleteRole indicates an expected call of DeleteRole
+// DeleteRole indicates an expected call of DeleteRole.
 func (mr *MockIDistributedEnforcerMockRecorder) DeleteRole(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRole", reflect.TypeOf((*MockIDistributedEnforcer)(nil).DeleteRole), arg0)
 }
 
-// DeleteRoleForUser mocks base method
+// DeleteRoleForUser mocks base method.
 func (m *MockIDistributedEnforcer) DeleteRoleForUser(arg0, arg1 string, arg2 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -379,14 +410,14 @@ func (m *MockIDistributedEnforcer) DeleteRoleForUser(arg0, arg1 string, arg2 ...
 	return ret0, ret1
 }
 
-// DeleteRoleForUser indicates an expected call of DeleteRoleForUser
+// DeleteRoleForUser indicates an expected call of DeleteRoleForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) DeleteRoleForUser(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRoleForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).DeleteRoleForUser), varargs...)
 }
 
-// DeleteRoleForUserInDomain mocks base method
+// DeleteRoleForUserInDomain mocks base method.
 func (m *MockIDistributedEnforcer) DeleteRoleForUserInDomain(arg0, arg1, arg2 string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteRoleForUserInDomain", arg0, arg1, arg2)
@@ -395,13 +426,13 @@ func (m *MockIDistributedEnforcer) DeleteRoleForUserInDomain(arg0, arg1, arg2 st
 	return ret0, ret1
 }
 
-// DeleteRoleForUserInDomain indicates an expected call of DeleteRoleForUserInDomain
+// DeleteRoleForUserInDomain indicates an expected call of DeleteRoleForUserInDomain.
 func (mr *MockIDistributedEnforcerMockRecorder) DeleteRoleForUserInDomain(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRoleForUserInDomain", reflect.TypeOf((*MockIDistributedEnforcer)(nil).DeleteRoleForUserInDomain), arg0, arg1, arg2)
 }
 
-// DeleteRolesForUser mocks base method
+// DeleteRolesForUser mocks base method.
 func (m *MockIDistributedEnforcer) DeleteRolesForUser(arg0 string, arg1 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -414,14 +445,14 @@ func (m *MockIDistributedEnforcer) DeleteRolesForUser(arg0 string, arg1 ...strin
 	return ret0, ret1
 }
 
-// DeleteRolesForUser indicates an expected call of DeleteRolesForUser
+// DeleteRolesForUser indicates an expected call of DeleteRolesForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) DeleteRolesForUser(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRolesForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).DeleteRolesForUser), varargs...)
 }
 
-// DeleteUser mocks base method
+// DeleteUser mocks base method.
 func (m *MockIDistributedEnforcer) DeleteUser(arg0 string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUser", arg0)
@@ -430,73 +461,73 @@ func (m *MockIDistributedEnforcer) DeleteUser(arg0 string) (bool, error) {
 	return ret0, ret1
 }
 
-// DeleteUser indicates an expected call of DeleteUser
+// DeleteUser indicates an expected call of DeleteUser.
 func (mr *MockIDistributedEnforcerMockRecorder) DeleteUser(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).DeleteUser), arg0)
 }
 
-// EnableAutoBuildRoleLinks mocks base method
+// EnableAutoBuildRoleLinks mocks base method.
 func (m *MockIDistributedEnforcer) EnableAutoBuildRoleLinks(arg0 bool) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "EnableAutoBuildRoleLinks", arg0)
 }
 
-// EnableAutoBuildRoleLinks indicates an expected call of EnableAutoBuildRoleLinks
+// EnableAutoBuildRoleLinks indicates an expected call of EnableAutoBuildRoleLinks.
 func (mr *MockIDistributedEnforcerMockRecorder) EnableAutoBuildRoleLinks(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableAutoBuildRoleLinks", reflect.TypeOf((*MockIDistributedEnforcer)(nil).EnableAutoBuildRoleLinks), arg0)
 }
 
-// EnableAutoNotifyWatcher mocks base method
+// EnableAutoNotifyWatcher mocks base method.
 func (m *MockIDistributedEnforcer) EnableAutoNotifyWatcher(arg0 bool) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "EnableAutoNotifyWatcher", arg0)
 }
 
-// EnableAutoNotifyWatcher indicates an expected call of EnableAutoNotifyWatcher
+// EnableAutoNotifyWatcher indicates an expected call of EnableAutoNotifyWatcher.
 func (mr *MockIDistributedEnforcerMockRecorder) EnableAutoNotifyWatcher(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableAutoNotifyWatcher", reflect.TypeOf((*MockIDistributedEnforcer)(nil).EnableAutoNotifyWatcher), arg0)
 }
 
-// EnableAutoSave mocks base method
+// EnableAutoSave mocks base method.
 func (m *MockIDistributedEnforcer) EnableAutoSave(arg0 bool) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "EnableAutoSave", arg0)
 }
 
-// EnableAutoSave indicates an expected call of EnableAutoSave
+// EnableAutoSave indicates an expected call of EnableAutoSave.
 func (mr *MockIDistributedEnforcerMockRecorder) EnableAutoSave(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableAutoSave", reflect.TypeOf((*MockIDistributedEnforcer)(nil).EnableAutoSave), arg0)
 }
 
-// EnableEnforce mocks base method
+// EnableEnforce mocks base method.
 func (m *MockIDistributedEnforcer) EnableEnforce(arg0 bool) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "EnableEnforce", arg0)
 }
 
-// EnableEnforce indicates an expected call of EnableEnforce
+// EnableEnforce indicates an expected call of EnableEnforce.
 func (mr *MockIDistributedEnforcerMockRecorder) EnableEnforce(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableEnforce", reflect.TypeOf((*MockIDistributedEnforcer)(nil).EnableEnforce), arg0)
 }
 
-// EnableLog mocks base method
+// EnableLog mocks base method.
 func (m *MockIDistributedEnforcer) EnableLog(arg0 bool) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "EnableLog", arg0)
 }
 
-// EnableLog indicates an expected call of EnableLog
+// EnableLog indicates an expected call of EnableLog.
 func (mr *MockIDistributedEnforcerMockRecorder) EnableLog(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableLog", reflect.TypeOf((*MockIDistributedEnforcer)(nil).EnableLog), arg0)
 }
 
-// Enforce mocks base method
+// Enforce mocks base method.
 func (m *MockIDistributedEnforcer) Enforce(arg0 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -509,13 +540,13 @@ func (m *MockIDistributedEnforcer) Enforce(arg0 ...interface{}) (bool, error) {
 	return ret0, ret1
 }
 
-// Enforce indicates an expected call of Enforce
+// Enforce indicates an expected call of Enforce.
 func (mr *MockIDistributedEnforcerMockRecorder) Enforce(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enforce", reflect.TypeOf((*MockIDistributedEnforcer)(nil).Enforce), arg0...)
 }
 
-// EnforceEx mocks base method
+// EnforceEx mocks base method.
 func (m *MockIDistributedEnforcer) EnforceEx(arg0 ...interface{}) (bool, []string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -529,13 +560,13 @@ func (m *MockIDistributedEnforcer) EnforceEx(arg0 ...interface{}) (bool, []strin
 	return ret0, ret1, ret2
 }
 
-// EnforceEx indicates an expected call of EnforceEx
+// EnforceEx indicates an expected call of EnforceEx.
 func (mr *MockIDistributedEnforcerMockRecorder) EnforceEx(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnforceEx", reflect.TypeOf((*MockIDistributedEnforcer)(nil).EnforceEx), arg0...)
 }
 
-// EnforceExWithMatcher mocks base method
+// EnforceExWithMatcher mocks base method.
 func (m *MockIDistributedEnforcer) EnforceExWithMatcher(arg0 string, arg1 ...interface{}) (bool, []string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -549,14 +580,14 @@ func (m *MockIDistributedEnforcer) EnforceExWithMatcher(arg0 string, arg1 ...int
 	return ret0, ret1, ret2
 }
 
-// EnforceExWithMatcher indicates an expected call of EnforceExWithMatcher
+// EnforceExWithMatcher indicates an expected call of EnforceExWithMatcher.
 func (mr *MockIDistributedEnforcerMockRecorder) EnforceExWithMatcher(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnforceExWithMatcher", reflect.TypeOf((*MockIDistributedEnforcer)(nil).EnforceExWithMatcher), varargs...)
 }
 
-// EnforceWithMatcher mocks base method
+// EnforceWithMatcher mocks base method.
 func (m *MockIDistributedEnforcer) EnforceWithMatcher(arg0 string, arg1 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -569,14 +600,14 @@ func (m *MockIDistributedEnforcer) EnforceWithMatcher(arg0 string, arg1 ...inter
 	return ret0, ret1
 }
 
-// EnforceWithMatcher indicates an expected call of EnforceWithMatcher
+// EnforceWithMatcher indicates an expected call of EnforceWithMatcher.
 func (mr *MockIDistributedEnforcerMockRecorder) EnforceWithMatcher(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnforceWithMatcher", reflect.TypeOf((*MockIDistributedEnforcer)(nil).EnforceWithMatcher), varargs...)
 }
 
-// GetAdapter mocks base method
+// GetAdapter mocks base method.
 func (m *MockIDistributedEnforcer) GetAdapter() persist.Adapter {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAdapter")
@@ -584,13 +615,13 @@ func (m *MockIDistributedEnforcer) GetAdapter() persist.Adapter {
 	return ret0
 }
 
-// GetAdapter indicates an expected call of GetAdapter
+// GetAdapter indicates an expected call of GetAdapter.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAdapter() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdapter", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAdapter))
 }
 
-// GetAllActions mocks base method
+// GetAllActions mocks base method.
 func (m *MockIDistributedEnforcer) GetAllActions() []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllActions")
@@ -598,13 +629,13 @@ func (m *MockIDistributedEnforcer) GetAllActions() []string {
 	return ret0
 }
 
-// GetAllActions indicates an expected call of GetAllActions
+// GetAllActions indicates an expected call of GetAllActions.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAllActions() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllActions", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAllActions))
 }
 
-// GetAllNamedActions mocks base method
+// GetAllNamedActions mocks base method.
 func (m *MockIDistributedEnforcer) GetAllNamedActions(arg0 string) []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllNamedActions", arg0)
@@ -612,13 +643,13 @@ func (m *MockIDistributedEnforcer) GetAllNamedActions(arg0 string) []string {
 	return ret0
 }
 
-// GetAllNamedActions indicates an expected call of GetAllNamedActions
+// GetAllNamedActions indicates an expected call of GetAllNamedActions.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAllNamedActions(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNamedActions", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAllNamedActions), arg0)
 }
 
-// GetAllNamedObjects mocks base method
+// GetAllNamedObjects mocks base method.
 func (m *MockIDistributedEnforcer) GetAllNamedObjects(arg0 string) []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllNamedObjects", arg0)
@@ -626,13 +657,13 @@ func (m *MockIDistributedEnforcer) GetAllNamedObjects(arg0 string) []string {
 	return ret0
 }
 
-// GetAllNamedObjects indicates an expected call of GetAllNamedObjects
+// GetAllNamedObjects indicates an expected call of GetAllNamedObjects.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAllNamedObjects(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNamedObjects", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAllNamedObjects), arg0)
 }
 
-// GetAllNamedRoles mocks base method
+// GetAllNamedRoles mocks base method.
 func (m *MockIDistributedEnforcer) GetAllNamedRoles(arg0 string) []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllNamedRoles", arg0)
@@ -640,13 +671,13 @@ func (m *MockIDistributedEnforcer) GetAllNamedRoles(arg0 string) []string {
 	return ret0
 }
 
-// GetAllNamedRoles indicates an expected call of GetAllNamedRoles
+// GetAllNamedRoles indicates an expected call of GetAllNamedRoles.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAllNamedRoles(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNamedRoles", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAllNamedRoles), arg0)
 }
 
-// GetAllNamedSubjects mocks base method
+// GetAllNamedSubjects mocks base method.
 func (m *MockIDistributedEnforcer) GetAllNamedSubjects(arg0 string) []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllNamedSubjects", arg0)
@@ -654,13 +685,13 @@ func (m *MockIDistributedEnforcer) GetAllNamedSubjects(arg0 string) []string {
 	return ret0
 }
 
-// GetAllNamedSubjects indicates an expected call of GetAllNamedSubjects
+// GetAllNamedSubjects indicates an expected call of GetAllNamedSubjects.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAllNamedSubjects(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNamedSubjects", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAllNamedSubjects), arg0)
 }
 
-// GetAllObjects mocks base method
+// GetAllObjects mocks base method.
 func (m *MockIDistributedEnforcer) GetAllObjects() []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllObjects")
@@ -668,13 +699,13 @@ func (m *MockIDistributedEnforcer) GetAllObjects() []string {
 	return ret0
 }
 
-// GetAllObjects indicates an expected call of GetAllObjects
+// GetAllObjects indicates an expected call of GetAllObjects.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAllObjects() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllObjects", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAllObjects))
 }
 
-// GetAllRoles mocks base method
+// GetAllRoles mocks base method.
 func (m *MockIDistributedEnforcer) GetAllRoles() []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllRoles")
@@ -682,13 +713,13 @@ func (m *MockIDistributedEnforcer) GetAllRoles() []string {
 	return ret0
 }
 
-// GetAllRoles indicates an expected call of GetAllRoles
+// GetAllRoles indicates an expected call of GetAllRoles.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAllRoles() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllRoles", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAllRoles))
 }
 
-// GetAllSubjects mocks base method
+// GetAllSubjects mocks base method.
 func (m *MockIDistributedEnforcer) GetAllSubjects() []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllSubjects")
@@ -696,13 +727,13 @@ func (m *MockIDistributedEnforcer) GetAllSubjects() []string {
 	return ret0
 }
 
-// GetAllSubjects indicates an expected call of GetAllSubjects
+// GetAllSubjects indicates an expected call of GetAllSubjects.
 func (mr *MockIDistributedEnforcerMockRecorder) GetAllSubjects() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSubjects", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetAllSubjects))
 }
 
-// GetFilteredGroupingPolicy mocks base method
+// GetFilteredGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) GetFilteredGroupingPolicy(arg0 int, arg1 ...string) [][]string {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -714,14 +745,14 @@ func (m *MockIDistributedEnforcer) GetFilteredGroupingPolicy(arg0 int, arg1 ...s
 	return ret0
 }
 
-// GetFilteredGroupingPolicy indicates an expected call of GetFilteredGroupingPolicy
+// GetFilteredGroupingPolicy indicates an expected call of GetFilteredGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) GetFilteredGroupingPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFilteredGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetFilteredGroupingPolicy), varargs...)
 }
 
-// GetFilteredNamedGroupingPolicy mocks base method
+// GetFilteredNamedGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) GetFilteredNamedGroupingPolicy(arg0 string, arg1 int, arg2 ...string) [][]string {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -733,14 +764,14 @@ func (m *MockIDistributedEnforcer) GetFilteredNamedGroupingPolicy(arg0 string, a
 	return ret0
 }
 
-// GetFilteredNamedGroupingPolicy indicates an expected call of GetFilteredNamedGroupingPolicy
+// GetFilteredNamedGroupingPolicy indicates an expected call of GetFilteredNamedGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) GetFilteredNamedGroupingPolicy(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFilteredNamedGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetFilteredNamedGroupingPolicy), varargs...)
 }
 
-// GetFilteredNamedPolicy mocks base method
+// GetFilteredNamedPolicy mocks base method.
 func (m *MockIDistributedEnforcer) GetFilteredNamedPolicy(arg0 string, arg1 int, arg2 ...string) [][]string {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -752,14 +783,14 @@ func (m *MockIDistributedEnforcer) GetFilteredNamedPolicy(arg0 string, arg1 int,
 	return ret0
 }
 
-// GetFilteredNamedPolicy indicates an expected call of GetFilteredNamedPolicy
+// GetFilteredNamedPolicy indicates an expected call of GetFilteredNamedPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) GetFilteredNamedPolicy(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFilteredNamedPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetFilteredNamedPolicy), varargs...)
 }
 
-// GetFilteredPolicy mocks base method
+// GetFilteredPolicy mocks base method.
 func (m *MockIDistributedEnforcer) GetFilteredPolicy(arg0 int, arg1 ...string) [][]string {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -771,14 +802,14 @@ func (m *MockIDistributedEnforcer) GetFilteredPolicy(arg0 int, arg1 ...string) [
 	return ret0
 }
 
-// GetFilteredPolicy indicates an expected call of GetFilteredPolicy
+// GetFilteredPolicy indicates an expected call of GetFilteredPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) GetFilteredPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFilteredPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetFilteredPolicy), varargs...)
 }
 
-// GetGroupingPolicy mocks base method
+// GetGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) GetGroupingPolicy() [][]string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGroupingPolicy")
@@ -786,13 +817,13 @@ func (m *MockIDistributedEnforcer) GetGroupingPolicy() [][]string {
 	return ret0
 }
 
-// GetGroupingPolicy indicates an expected call of GetGroupingPolicy
+// GetGroupingPolicy indicates an expected call of GetGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) GetGroupingPolicy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetGroupingPolicy))
 }
 
-// GetImplicitPermissionsForUser mocks base method
+// GetImplicitPermissionsForUser mocks base method.
 func (m *MockIDistributedEnforcer) GetImplicitPermissionsForUser(arg0 string, arg1 ...string) ([][]string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -805,14 +836,14 @@ func (m *MockIDistributedEnforcer) GetImplicitPermissionsForUser(arg0 string, ar
 	return ret0, ret1
 }
 
-// GetImplicitPermissionsForUser indicates an expected call of GetImplicitPermissionsForUser
+// GetImplicitPermissionsForUser indicates an expected call of GetImplicitPermissionsForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) GetImplicitPermissionsForUser(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImplicitPermissionsForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetImplicitPermissionsForUser), varargs...)
 }
 
-// GetImplicitRolesForUser mocks base method
+// GetImplicitRolesForUser mocks base method.
 func (m *MockIDistributedEnforcer) GetImplicitRolesForUser(arg0 string, arg1 ...string) ([]string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -825,14 +856,14 @@ func (m *MockIDistributedEnforcer) GetImplicitRolesForUser(arg0 string, arg1 ...
 	return ret0, ret1
 }
 
-// GetImplicitRolesForUser indicates an expected call of GetImplicitRolesForUser
+// GetImplicitRolesForUser indicates an expected call of GetImplicitRolesForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) GetImplicitRolesForUser(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImplicitRolesForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetImplicitRolesForUser), varargs...)
 }
 
-// GetImplicitUsersForPermission mocks base method
+// GetImplicitUsersForPermission mocks base method.
 func (m *MockIDistributedEnforcer) GetImplicitUsersForPermission(arg0 ...string) ([]string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -845,13 +876,13 @@ func (m *MockIDistributedEnforcer) GetImplicitUsersForPermission(arg0 ...string)
 	return ret0, ret1
 }
 
-// GetImplicitUsersForPermission indicates an expected call of GetImplicitUsersForPermission
+// GetImplicitUsersForPermission indicates an expected call of GetImplicitUsersForPermission.
 func (mr *MockIDistributedEnforcerMockRecorder) GetImplicitUsersForPermission(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImplicitUsersForPermission", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetImplicitUsersForPermission), arg0...)
 }
 
-// GetModel mocks base method
+// GetModel mocks base method.
 func (m *MockIDistributedEnforcer) GetModel() model.Model {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetModel")
@@ -859,13 +890,13 @@ func (m *MockIDistributedEnforcer) GetModel() model.Model {
 	return ret0
 }
 
-// GetModel indicates an expected call of GetModel
+// GetModel indicates an expected call of GetModel.
 func (mr *MockIDistributedEnforcerMockRecorder) GetModel() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetModel", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetModel))
 }
 
-// GetNamedGroupingPolicy mocks base method
+// GetNamedGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) GetNamedGroupingPolicy(arg0 string) [][]string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNamedGroupingPolicy", arg0)
@@ -873,13 +904,13 @@ func (m *MockIDistributedEnforcer) GetNamedGroupingPolicy(arg0 string) [][]strin
 	return ret0
 }
 
-// GetNamedGroupingPolicy indicates an expected call of GetNamedGroupingPolicy
+// GetNamedGroupingPolicy indicates an expected call of GetNamedGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) GetNamedGroupingPolicy(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamedGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetNamedGroupingPolicy), arg0)
 }
 
-// GetNamedPolicy mocks base method
+// GetNamedPolicy mocks base method.
 func (m *MockIDistributedEnforcer) GetNamedPolicy(arg0 string) [][]string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNamedPolicy", arg0)
@@ -887,13 +918,13 @@ func (m *MockIDistributedEnforcer) GetNamedPolicy(arg0 string) [][]string {
 	return ret0
 }
 
-// GetNamedPolicy indicates an expected call of GetNamedPolicy
+// GetNamedPolicy indicates an expected call of GetNamedPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) GetNamedPolicy(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamedPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetNamedPolicy), arg0)
 }
 
-// GetPermissionsForUser mocks base method
+// GetPermissionsForUser mocks base method.
 func (m *MockIDistributedEnforcer) GetPermissionsForUser(arg0 string, arg1 ...string) [][]string {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -905,14 +936,14 @@ func (m *MockIDistributedEnforcer) GetPermissionsForUser(arg0 string, arg1 ...st
 	return ret0
 }
 
-// GetPermissionsForUser indicates an expected call of GetPermissionsForUser
+// GetPermissionsForUser indicates an expected call of GetPermissionsForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) GetPermissionsForUser(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPermissionsForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetPermissionsForUser), varargs...)
 }
 
-// GetPermissionsForUserInDomain mocks base method
+// GetPermissionsForUserInDomain mocks base method.
 func (m *MockIDistributedEnforcer) GetPermissionsForUserInDomain(arg0, arg1 string) [][]string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPermissionsForUserInDomain", arg0, arg1)
@@ -920,13 +951,13 @@ func (m *MockIDistributedEnforcer) GetPermissionsForUserInDomain(arg0, arg1 stri
 	return ret0
 }
 
-// GetPermissionsForUserInDomain indicates an expected call of GetPermissionsForUserInDomain
+// GetPermissionsForUserInDomain indicates an expected call of GetPermissionsForUserInDomain.
 func (mr *MockIDistributedEnforcerMockRecorder) GetPermissionsForUserInDomain(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPermissionsForUserInDomain", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetPermissionsForUserInDomain), arg0, arg1)
 }
 
-// GetPolicy mocks base method
+// GetPolicy mocks base method.
 func (m *MockIDistributedEnforcer) GetPolicy() [][]string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPolicy")
@@ -934,13 +965,13 @@ func (m *MockIDistributedEnforcer) GetPolicy() [][]string {
 	return ret0
 }
 
-// GetPolicy indicates an expected call of GetPolicy
+// GetPolicy indicates an expected call of GetPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) GetPolicy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetPolicy))
 }
 
-// GetRoleManager mocks base method
+// GetRoleManager mocks base method.
 func (m *MockIDistributedEnforcer) GetRoleManager() rbac.RoleManager {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRoleManager")
@@ -948,13 +979,13 @@ func (m *MockIDistributedEnforcer) GetRoleManager() rbac.RoleManager {
 	return ret0
 }
 
-// GetRoleManager indicates an expected call of GetRoleManager
+// GetRoleManager indicates an expected call of GetRoleManager.
 func (mr *MockIDistributedEnforcerMockRecorder) GetRoleManager() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoleManager", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetRoleManager))
 }
 
-// GetRolesForUser mocks base method
+// GetRolesForUser mocks base method.
 func (m *MockIDistributedEnforcer) GetRolesForUser(arg0 string, arg1 ...string) ([]string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -967,14 +998,14 @@ func (m *MockIDistributedEnforcer) GetRolesForUser(arg0 string, arg1 ...string) 
 	return ret0, ret1
 }
 
-// GetRolesForUser indicates an expected call of GetRolesForUser
+// GetRolesForUser indicates an expected call of GetRolesForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) GetRolesForUser(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRolesForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetRolesForUser), varargs...)
 }
 
-// GetRolesForUserInDomain mocks base method
+// GetRolesForUserInDomain mocks base method.
 func (m *MockIDistributedEnforcer) GetRolesForUserInDomain(arg0, arg1 string) []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRolesForUserInDomain", arg0, arg1)
@@ -982,13 +1013,13 @@ func (m *MockIDistributedEnforcer) GetRolesForUserInDomain(arg0, arg1 string) []
 	return ret0
 }
 
-// GetRolesForUserInDomain indicates an expected call of GetRolesForUserInDomain
+// GetRolesForUserInDomain indicates an expected call of GetRolesForUserInDomain.
 func (mr *MockIDistributedEnforcerMockRecorder) GetRolesForUserInDomain(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRolesForUserInDomain", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetRolesForUserInDomain), arg0, arg1)
 }
 
-// GetUsersForRole mocks base method
+// GetUsersForRole mocks base method.
 func (m *MockIDistributedEnforcer) GetUsersForRole(arg0 string, arg1 ...string) ([]string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -1001,14 +1032,14 @@ func (m *MockIDistributedEnforcer) GetUsersForRole(arg0 string, arg1 ...string) 
 	return ret0, ret1
 }
 
-// GetUsersForRole indicates an expected call of GetUsersForRole
+// GetUsersForRole indicates an expected call of GetUsersForRole.
 func (mr *MockIDistributedEnforcerMockRecorder) GetUsersForRole(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersForRole", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetUsersForRole), varargs...)
 }
 
-// GetUsersForRoleInDomain mocks base method
+// GetUsersForRoleInDomain mocks base method.
 func (m *MockIDistributedEnforcer) GetUsersForRoleInDomain(arg0, arg1 string) []string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUsersForRoleInDomain", arg0, arg1)
@@ -1016,13 +1047,13 @@ func (m *MockIDistributedEnforcer) GetUsersForRoleInDomain(arg0, arg1 string) []
 	return ret0
 }
 
-// GetUsersForRoleInDomain indicates an expected call of GetUsersForRoleInDomain
+// GetUsersForRoleInDomain indicates an expected call of GetUsersForRoleInDomain.
 func (mr *MockIDistributedEnforcerMockRecorder) GetUsersForRoleInDomain(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersForRoleInDomain", reflect.TypeOf((*MockIDistributedEnforcer)(nil).GetUsersForRoleInDomain), arg0, arg1)
 }
 
-// HasGroupingPolicy mocks base method
+// HasGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) HasGroupingPolicy(arg0 ...interface{}) bool {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -1034,13 +1065,13 @@ func (m *MockIDistributedEnforcer) HasGroupingPolicy(arg0 ...interface{}) bool {
 	return ret0
 }
 
-// HasGroupingPolicy indicates an expected call of HasGroupingPolicy
+// HasGroupingPolicy indicates an expected call of HasGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) HasGroupingPolicy(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).HasGroupingPolicy), arg0...)
 }
 
-// HasNamedGroupingPolicy mocks base method
+// HasNamedGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) HasNamedGroupingPolicy(arg0 string, arg1 ...interface{}) bool {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -1052,14 +1083,14 @@ func (m *MockIDistributedEnforcer) HasNamedGroupingPolicy(arg0 string, arg1 ...i
 	return ret0
 }
 
-// HasNamedGroupingPolicy indicates an expected call of HasNamedGroupingPolicy
+// HasNamedGroupingPolicy indicates an expected call of HasNamedGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) HasNamedGroupingPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasNamedGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).HasNamedGroupingPolicy), varargs...)
 }
 
-// HasNamedPolicy mocks base method
+// HasNamedPolicy mocks base method.
 func (m *MockIDistributedEnforcer) HasNamedPolicy(arg0 string, arg1 ...interface{}) bool {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -1071,14 +1102,14 @@ func (m *MockIDistributedEnforcer) HasNamedPolicy(arg0 string, arg1 ...interface
 	return ret0
 }
 
-// HasNamedPolicy indicates an expected call of HasNamedPolicy
+// HasNamedPolicy indicates an expected call of HasNamedPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) HasNamedPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasNamedPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).HasNamedPolicy), varargs...)
 }
 
-// HasPermissionForUser mocks base method
+// HasPermissionForUser mocks base method.
 func (m *MockIDistributedEnforcer) HasPermissionForUser(arg0 string, arg1 ...string) bool {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -1090,14 +1121,14 @@ func (m *MockIDistributedEnforcer) HasPermissionForUser(arg0 string, arg1 ...str
 	return ret0
 }
 
-// HasPermissionForUser indicates an expected call of HasPermissionForUser
+// HasPermissionForUser indicates an expected call of HasPermissionForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) HasPermissionForUser(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasPermissionForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).HasPermissionForUser), varargs...)
 }
 
-// HasPolicy mocks base method
+// HasPolicy mocks base method.
 func (m *MockIDistributedEnforcer) HasPolicy(arg0 ...interface{}) bool {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -1109,13 +1140,13 @@ func (m *MockIDistributedEnforcer) HasPolicy(arg0 ...interface{}) bool {
 	return ret0
 }
 
-// HasPolicy indicates an expected call of HasPolicy
+// HasPolicy indicates an expected call of HasPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) HasPolicy(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).HasPolicy), arg0...)
 }
 
-// HasRoleForUser mocks base method
+// HasRoleForUser mocks base method.
 func (m *MockIDistributedEnforcer) HasRoleForUser(arg0, arg1 string, arg2 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -1128,14 +1159,14 @@ func (m *MockIDistributedEnforcer) HasRoleForUser(arg0, arg1 string, arg2 ...str
 	return ret0, ret1
 }
 
-// HasRoleForUser indicates an expected call of HasRoleForUser
+// HasRoleForUser indicates an expected call of HasRoleForUser.
 func (mr *MockIDistributedEnforcerMockRecorder) HasRoleForUser(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasRoleForUser", reflect.TypeOf((*MockIDistributedEnforcer)(nil).HasRoleForUser), varargs...)
 }
 
-// InitWithAdapter mocks base method
+// InitWithAdapter mocks base method.
 func (m *MockIDistributedEnforcer) InitWithAdapter(arg0 string, arg1 persist.Adapter) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InitWithAdapter", arg0, arg1)
@@ -1143,13 +1174,13 @@ func (m *MockIDistributedEnforcer) InitWithAdapter(arg0 string, arg1 persist.Ada
 	return ret0
 }
 
-// InitWithAdapter indicates an expected call of InitWithAdapter
+// InitWithAdapter indicates an expected call of InitWithAdapter.
 func (mr *MockIDistributedEnforcerMockRecorder) InitWithAdapter(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitWithAdapter", reflect.TypeOf((*MockIDistributedEnforcer)(nil).InitWithAdapter), arg0, arg1)
 }
 
-// InitWithFile mocks base method
+// InitWithFile mocks base method.
 func (m *MockIDistributedEnforcer) InitWithFile(arg0, arg1 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InitWithFile", arg0, arg1)
@@ -1157,13 +1188,13 @@ func (m *MockIDistributedEnforcer) InitWithFile(arg0, arg1 string) error {
 	return ret0
 }
 
-// InitWithFile indicates an expected call of InitWithFile
+// InitWithFile indicates an expected call of InitWithFile.
 func (mr *MockIDistributedEnforcerMockRecorder) InitWithFile(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitWithFile", reflect.TypeOf((*MockIDistributedEnforcer)(nil).InitWithFile), arg0, arg1)
 }
 
-// InitWithModelAndAdapter mocks base method
+// InitWithModelAndAdapter mocks base method.
 func (m *MockIDistributedEnforcer) InitWithModelAndAdapter(arg0 model.Model, arg1 persist.Adapter) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InitWithModelAndAdapter", arg0, arg1)
@@ -1171,13 +1202,13 @@ func (m *MockIDistributedEnforcer) InitWithModelAndAdapter(arg0 model.Model, arg
 	return ret0
 }
 
-// InitWithModelAndAdapter indicates an expected call of InitWithModelAndAdapter
+// InitWithModelAndAdapter indicates an expected call of InitWithModelAndAdapter.
 func (mr *MockIDistributedEnforcerMockRecorder) InitWithModelAndAdapter(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitWithModelAndAdapter", reflect.TypeOf((*MockIDistributedEnforcer)(nil).InitWithModelAndAdapter), arg0, arg1)
 }
 
-// IsFiltered mocks base method
+// IsFiltered mocks base method.
 func (m *MockIDistributedEnforcer) IsFiltered() bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsFiltered")
@@ -1185,13 +1216,13 @@ func (m *MockIDistributedEnforcer) IsFiltered() bool {
 	return ret0
 }
 
-// IsFiltered indicates an expected call of IsFiltered
+// IsFiltered indicates an expected call of IsFiltered.
 func (mr *MockIDistributedEnforcerMockRecorder) IsFiltered() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFiltered", reflect.TypeOf((*MockIDistributedEnforcer)(nil).IsFiltered))
 }
 
-// LoadFilteredPolicy mocks base method
+// LoadFilteredPolicy mocks base method.
 func (m *MockIDistributedEnforcer) LoadFilteredPolicy(arg0 interface{}) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadFilteredPolicy", arg0)
@@ -1199,13 +1230,13 @@ func (m *MockIDistributedEnforcer) LoadFilteredPolicy(arg0 interface{}) error {
 	return ret0
 }
 
-// LoadFilteredPolicy indicates an expected call of LoadFilteredPolicy
+// LoadFilteredPolicy indicates an expected call of LoadFilteredPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) LoadFilteredPolicy(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadFilteredPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).LoadFilteredPolicy), arg0)
 }
 
-// LoadIncrementalFilteredPolicy mocks base method
+// LoadIncrementalFilteredPolicy mocks base method.
 func (m *MockIDistributedEnforcer) LoadIncrementalFilteredPolicy(arg0 interface{}) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadIncrementalFilteredPolicy", arg0)
@@ -1213,13 +1244,13 @@ func (m *MockIDistributedEnforcer) LoadIncrementalFilteredPolicy(arg0 interface{
 	return ret0
 }
 
-// LoadIncrementalFilteredPolicy indicates an expected call of LoadIncrementalFilteredPolicy
+// LoadIncrementalFilteredPolicy indicates an expected call of LoadIncrementalFilteredPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) LoadIncrementalFilteredPolicy(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadIncrementalFilteredPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).LoadIncrementalFilteredPolicy), arg0)
 }
 
-// LoadModel mocks base method
+// LoadModel mocks base method.
 func (m *MockIDistributedEnforcer) LoadModel() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadModel")
@@ -1227,13 +1258,13 @@ func (m *MockIDistributedEnforcer) LoadModel() error {
 	return ret0
 }
 
-// LoadModel indicates an expected call of LoadModel
+// LoadModel indicates an expected call of LoadModel.
 func (mr *MockIDistributedEnforcerMockRecorder) LoadModel() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadModel", reflect.TypeOf((*MockIDistributedEnforcer)(nil).LoadModel))
 }
 
-// LoadPolicy mocks base method
+// LoadPolicy mocks base method.
 func (m *MockIDistributedEnforcer) LoadPolicy() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoadPolicy")
@@ -1241,13 +1272,13 @@ func (m *MockIDistributedEnforcer) LoadPolicy() error {
 	return ret0
 }
 
-// LoadPolicy indicates an expected call of LoadPolicy
+// LoadPolicy indicates an expected call of LoadPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) LoadPolicy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).LoadPolicy))
 }
 
-// RemoveFilteredGroupingPolicy mocks base method
+// RemoveFilteredGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) RemoveFilteredGroupingPolicy(arg0 int, arg1 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -1260,14 +1291,14 @@ func (m *MockIDistributedEnforcer) RemoveFilteredGroupingPolicy(arg0 int, arg1 .
 	return ret0, ret1
 }
 
-// RemoveFilteredGroupingPolicy indicates an expected call of RemoveFilteredGroupingPolicy
+// RemoveFilteredGroupingPolicy indicates an expected call of RemoveFilteredGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveFilteredGroupingPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFilteredGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveFilteredGroupingPolicy), varargs...)
 }
 
-// RemoveFilteredNamedGroupingPolicy mocks base method
+// RemoveFilteredNamedGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) RemoveFilteredNamedGroupingPolicy(arg0 string, arg1 int, arg2 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -1280,14 +1311,14 @@ func (m *MockIDistributedEnforcer) RemoveFilteredNamedGroupingPolicy(arg0 string
 	return ret0, ret1
 }
 
-// RemoveFilteredNamedGroupingPolicy indicates an expected call of RemoveFilteredNamedGroupingPolicy
+// RemoveFilteredNamedGroupingPolicy indicates an expected call of RemoveFilteredNamedGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveFilteredNamedGroupingPolicy(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFilteredNamedGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveFilteredNamedGroupingPolicy), varargs...)
 }
 
-// RemoveFilteredNamedPolicy mocks base method
+// RemoveFilteredNamedPolicy mocks base method.
 func (m *MockIDistributedEnforcer) RemoveFilteredNamedPolicy(arg0 string, arg1 int, arg2 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
@@ -1300,14 +1331,14 @@ func (m *MockIDistributedEnforcer) RemoveFilteredNamedPolicy(arg0 string, arg1 i
 	return ret0, ret1
 }
 
-// RemoveFilteredNamedPolicy indicates an expected call of RemoveFilteredNamedPolicy
+// RemoveFilteredNamedPolicy indicates an expected call of RemoveFilteredNamedPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveFilteredNamedPolicy(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFilteredNamedPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveFilteredNamedPolicy), varargs...)
 }
 
-// RemoveFilteredPolicy mocks base method
+// RemoveFilteredPolicy mocks base method.
 func (m *MockIDistributedEnforcer) RemoveFilteredPolicy(arg0 int, arg1 ...string) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -1320,14 +1351,14 @@ func (m *MockIDistributedEnforcer) RemoveFilteredPolicy(arg0 int, arg1 ...string
 	return ret0, ret1
 }
 
-// RemoveFilteredPolicy indicates an expected call of RemoveFilteredPolicy
+// RemoveFilteredPolicy indicates an expected call of RemoveFilteredPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveFilteredPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFilteredPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveFilteredPolicy), varargs...)
 }
 
-// RemoveFilteredPolicySelf mocks base method
+// RemoveFilteredPolicySelf mocks base method.
 func (m *MockIDistributedEnforcer) RemoveFilteredPolicySelf(arg0 func() bool, arg1, arg2 string, arg3 int, arg4 ...string) ([][]string, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1, arg2, arg3}
@@ -1340,14 +1371,14 @@ func (m *MockIDistributedEnforcer) RemoveFilteredPolicySelf(arg0 func() bool, ar
 	return ret0, ret1
 }
 
-// RemoveFilteredPolicySelf indicates an expected call of RemoveFilteredPolicySelf
+// RemoveFilteredPolicySelf indicates an expected call of RemoveFilteredPolicySelf.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveFilteredPolicySelf(arg0, arg1, arg2, arg3 interface{}, arg4 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFilteredPolicySelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveFilteredPolicySelf), varargs...)
 }
 
-// RemoveGroupingPolicies mocks base method
+// RemoveGroupingPolicies mocks base method.
 func (m *MockIDistributedEnforcer) RemoveGroupingPolicies(arg0 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveGroupingPolicies", arg0)
@@ -1356,13 +1387,13 @@ func (m *MockIDistributedEnforcer) RemoveGroupingPolicies(arg0 [][]string) (bool
 	return ret0, ret1
 }
 
-// RemoveGroupingPolicies indicates an expected call of RemoveGroupingPolicies
+// RemoveGroupingPolicies indicates an expected call of RemoveGroupingPolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveGroupingPolicies(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGroupingPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveGroupingPolicies), arg0)
 }
 
-// RemoveGroupingPolicy mocks base method
+// RemoveGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) RemoveGroupingPolicy(arg0 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -1375,13 +1406,13 @@ func (m *MockIDistributedEnforcer) RemoveGroupingPolicy(arg0 ...interface{}) (bo
 	return ret0, ret1
 }
 
-// RemoveGroupingPolicy indicates an expected call of RemoveGroupingPolicy
+// RemoveGroupingPolicy indicates an expected call of RemoveGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveGroupingPolicy(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveGroupingPolicy), arg0...)
 }
 
-// RemoveNamedGroupingPolicies mocks base method
+// RemoveNamedGroupingPolicies mocks base method.
 func (m *MockIDistributedEnforcer) RemoveNamedGroupingPolicies(arg0 string, arg1 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveNamedGroupingPolicies", arg0, arg1)
@@ -1390,13 +1421,13 @@ func (m *MockIDistributedEnforcer) RemoveNamedGroupingPolicies(arg0 string, arg1
 	return ret0, ret1
 }
 
-// RemoveNamedGroupingPolicies indicates an expected call of RemoveNamedGroupingPolicies
+// RemoveNamedGroupingPolicies indicates an expected call of RemoveNamedGroupingPolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveNamedGroupingPolicies(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveNamedGroupingPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveNamedGroupingPolicies), arg0, arg1)
 }
 
-// RemoveNamedGroupingPolicy mocks base method
+// RemoveNamedGroupingPolicy mocks base method.
 func (m *MockIDistributedEnforcer) RemoveNamedGroupingPolicy(arg0 string, arg1 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -1409,14 +1440,14 @@ func (m *MockIDistributedEnforcer) RemoveNamedGroupingPolicy(arg0 string, arg1 .
 	return ret0, ret1
 }
 
-// RemoveNamedGroupingPolicy indicates an expected call of RemoveNamedGroupingPolicy
+// RemoveNamedGroupingPolicy indicates an expected call of RemoveNamedGroupingPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveNamedGroupingPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveNamedGroupingPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveNamedGroupingPolicy), varargs...)
 }
 
-// RemoveNamedPolicies mocks base method
+// RemoveNamedPolicies mocks base method.
 func (m *MockIDistributedEnforcer) RemoveNamedPolicies(arg0 string, arg1 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveNamedPolicies", arg0, arg1)
@@ -1425,13 +1456,13 @@ func (m *MockIDistributedEnforcer) RemoveNamedPolicies(arg0 string, arg1 [][]str
 	return ret0, ret1
 }
 
-// RemoveNamedPolicies indicates an expected call of RemoveNamedPolicies
+// RemoveNamedPolicies indicates an expected call of RemoveNamedPolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveNamedPolicies(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveNamedPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveNamedPolicies), arg0, arg1)
 }
 
-// RemoveNamedPolicy mocks base method
+// RemoveNamedPolicy mocks base method.
 func (m *MockIDistributedEnforcer) RemoveNamedPolicy(arg0 string, arg1 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0}
@@ -1444,14 +1475,14 @@ func (m *MockIDistributedEnforcer) RemoveNamedPolicy(arg0 string, arg1 ...interf
 	return ret0, ret1
 }
 
-// RemoveNamedPolicy indicates an expected call of RemoveNamedPolicy
+// RemoveNamedPolicy indicates an expected call of RemoveNamedPolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) RemoveNamedPolicy(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveNamedPolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemoveNamedPolicy), varargs...)
 }
 
-// RemovePolicies mocks base method
+// RemovePolicies mocks base method.
 func (m *MockIDistributedEnforcer) RemovePolicies(arg0 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemovePolicies", arg0)
@@ -1460,13 +1491,13 @@ func (m *MockIDistributedEnforcer) RemovePolicies(arg0 [][]string) (bool, error)
 	return ret0, ret1
 }
 
-// RemovePolicies indicates an expected call of RemovePolicies
+// RemovePolicies indicates an expected call of RemovePolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) RemovePolicies(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemovePolicies), arg0)
 }
 
-// RemovePoliciesSelf mocks base method
+// RemovePoliciesSelf mocks base method.
 func (m *MockIDistributedEnforcer) RemovePoliciesSelf(arg0 func() bool, arg1, arg2 string, arg3 [][]string) ([][]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemovePoliciesSelf", arg0, arg1, arg2, arg3)
@@ -1475,13 +1506,13 @@ func (m *MockIDistributedEnforcer) RemovePoliciesSelf(arg0 func() bool, arg1, ar
 	return ret0, ret1
 }
 
-// RemovePoliciesSelf indicates an expected call of RemovePoliciesSelf
+// RemovePoliciesSelf indicates an expected call of RemovePoliciesSelf.
 func (mr *MockIDistributedEnforcerMockRecorder) RemovePoliciesSelf(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePoliciesSelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemovePoliciesSelf), arg0, arg1, arg2, arg3)
 }
 
-// RemovePolicy mocks base method
+// RemovePolicy mocks base method.
 func (m *MockIDistributedEnforcer) RemovePolicy(arg0 ...interface{}) (bool, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -1494,13 +1525,13 @@ func (m *MockIDistributedEnforcer) RemovePolicy(arg0 ...interface{}) (bool, erro
 	return ret0, ret1
 }
 
-// RemovePolicy indicates an expected call of RemovePolicy
+// RemovePolicy indicates an expected call of RemovePolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) RemovePolicy(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).RemovePolicy), arg0...)
 }
 
-// SavePolicy mocks base method
+// SavePolicy mocks base method.
 func (m *MockIDistributedEnforcer) SavePolicy() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SavePolicy")
@@ -1508,73 +1539,73 @@ func (m *MockIDistributedEnforcer) SavePolicy() error {
 	return ret0
 }
 
-// SavePolicy indicates an expected call of SavePolicy
+// SavePolicy indicates an expected call of SavePolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) SavePolicy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SavePolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).SavePolicy))
 }
 
-// SetAdapter mocks base method
+// SetAdapter mocks base method.
 func (m *MockIDistributedEnforcer) SetAdapter(arg0 persist.Adapter) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetAdapter", arg0)
 }
 
-// SetAdapter indicates an expected call of SetAdapter
+// SetAdapter indicates an expected call of SetAdapter.
 func (mr *MockIDistributedEnforcerMockRecorder) SetAdapter(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAdapter", reflect.TypeOf((*MockIDistributedEnforcer)(nil).SetAdapter), arg0)
 }
 
-// SetDispatcher mocks base method
+// SetDispatcher mocks base method.
 func (m *MockIDistributedEnforcer) SetDispatcher(arg0 persist.Dispatcher) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetDispatcher", arg0)
 }
 
-// SetDispatcher indicates an expected call of SetDispatcher
+// SetDispatcher indicates an expected call of SetDispatcher.
 func (mr *MockIDistributedEnforcerMockRecorder) SetDispatcher(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDispatcher", reflect.TypeOf((*MockIDistributedEnforcer)(nil).SetDispatcher), arg0)
 }
 
-// SetEffector mocks base method
-func (m *MockIDistributedEnforcer) SetEffector(arg0 effect.Effector) {
+// SetEffector mocks base method.
+func (m *MockIDistributedEnforcer) SetEffector(arg0 effector.Effector) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetEffector", arg0)
 }
 
-// SetEffector indicates an expected call of SetEffector
+// SetEffector indicates an expected call of SetEffector.
 func (mr *MockIDistributedEnforcerMockRecorder) SetEffector(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEffector", reflect.TypeOf((*MockIDistributedEnforcer)(nil).SetEffector), arg0)
 }
 
-// SetModel mocks base method
+// SetModel mocks base method.
 func (m *MockIDistributedEnforcer) SetModel(arg0 model.Model) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetModel", arg0)
 }
 
-// SetModel indicates an expected call of SetModel
+// SetModel indicates an expected call of SetModel.
 func (mr *MockIDistributedEnforcerMockRecorder) SetModel(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetModel", reflect.TypeOf((*MockIDistributedEnforcer)(nil).SetModel), arg0)
 }
 
-// SetRoleManager mocks base method
+// SetRoleManager mocks base method.
 func (m *MockIDistributedEnforcer) SetRoleManager(arg0 rbac.RoleManager) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetRoleManager", arg0)
 }
 
-// SetRoleManager indicates an expected call of SetRoleManager
+// SetRoleManager indicates an expected call of SetRoleManager.
 func (mr *MockIDistributedEnforcerMockRecorder) SetRoleManager(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRoleManager", reflect.TypeOf((*MockIDistributedEnforcer)(nil).SetRoleManager), arg0)
 }
 
-// SetWatcher mocks base method
+// SetWatcher mocks base method.
 func (m *MockIDistributedEnforcer) SetWatcher(arg0 persist.Watcher) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetWatcher", arg0)
@@ -1582,13 +1613,53 @@ func (m *MockIDistributedEnforcer) SetWatcher(arg0 persist.Watcher) error {
 	return ret0
 }
 
-// SetWatcher indicates an expected call of SetWatcher
+// SetWatcher indicates an expected call of SetWatcher.
 func (mr *MockIDistributedEnforcerMockRecorder) SetWatcher(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetWatcher", reflect.TypeOf((*MockIDistributedEnforcer)(nil).SetWatcher), arg0)
 }
 
-// UpdatePolicies mocks base method
+// UpdateFilteredPolicies mocks base method.
+func (m *MockIDistributedEnforcer) UpdateFilteredPolicies(arg0 [][]string, arg1 int, arg2 ...string) (bool, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateFilteredPolicies", varargs...)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateFilteredPolicies indicates an expected call of UpdateFilteredPolicies.
+func (mr *MockIDistributedEnforcerMockRecorder) UpdateFilteredPolicies(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFilteredPolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdateFilteredPolicies), varargs...)
+}
+
+// UpdateFilteredPoliciesSelf mocks base method.
+func (m *MockIDistributedEnforcer) UpdateFilteredPoliciesSelf(arg0 func() bool, arg1, arg2 string, arg3 [][]string, arg4 int, arg5 ...string) (bool, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2, arg3, arg4}
+	for _, a := range arg5 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateFilteredPoliciesSelf", varargs...)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateFilteredPoliciesSelf indicates an expected call of UpdateFilteredPoliciesSelf.
+func (mr *MockIDistributedEnforcerMockRecorder) UpdateFilteredPoliciesSelf(arg0, arg1, arg2, arg3, arg4 interface{}, arg5 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1, arg2, arg3, arg4}, arg5...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFilteredPoliciesSelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdateFilteredPoliciesSelf), varargs...)
+}
+
+// UpdatePolicies mocks base method.
 func (m *MockIDistributedEnforcer) UpdatePolicies(arg0, arg1 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePolicies", arg0, arg1)
@@ -1597,13 +1668,13 @@ func (m *MockIDistributedEnforcer) UpdatePolicies(arg0, arg1 [][]string) (bool, 
 	return ret0, ret1
 }
 
-// UpdatePolicies indicates an expected call of UpdatePolicies
+// UpdatePolicies indicates an expected call of UpdatePolicies.
 func (mr *MockIDistributedEnforcerMockRecorder) UpdatePolicies(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicies", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdatePolicies), arg0, arg1)
 }
 
-// UpdatePoliciesSelf mocks base method
+// UpdatePoliciesSelf mocks base method.
 func (m *MockIDistributedEnforcer) UpdatePoliciesSelf(arg0 func() bool, arg1, arg2 string, arg3, arg4 [][]string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePoliciesSelf", arg0, arg1, arg2, arg3, arg4)
@@ -1612,13 +1683,13 @@ func (m *MockIDistributedEnforcer) UpdatePoliciesSelf(arg0 func() bool, arg1, ar
 	return ret0, ret1
 }
 
-// UpdatePoliciesSelf indicates an expected call of UpdatePoliciesSelf
+// UpdatePoliciesSelf indicates an expected call of UpdatePoliciesSelf.
 func (mr *MockIDistributedEnforcerMockRecorder) UpdatePoliciesSelf(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePoliciesSelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdatePoliciesSelf), arg0, arg1, arg2, arg3, arg4)
 }
 
-// UpdatePolicy mocks base method
+// UpdatePolicy mocks base method.
 func (m *MockIDistributedEnforcer) UpdatePolicy(arg0, arg1 []string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePolicy", arg0, arg1)
@@ -1627,13 +1698,13 @@ func (m *MockIDistributedEnforcer) UpdatePolicy(arg0, arg1 []string) (bool, erro
 	return ret0, ret1
 }
 
-// UpdatePolicy indicates an expected call of UpdatePolicy
+// UpdatePolicy indicates an expected call of UpdatePolicy.
 func (mr *MockIDistributedEnforcerMockRecorder) UpdatePolicy(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicy", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdatePolicy), arg0, arg1)
 }
 
-// UpdatePolicySelf mocks base method
+// UpdatePolicySelf mocks base method.
 func (m *MockIDistributedEnforcer) UpdatePolicySelf(arg0 func() bool, arg1, arg2 string, arg3, arg4 []string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePolicySelf", arg0, arg1, arg2, arg3, arg4)
@@ -1642,7 +1713,7 @@ func (m *MockIDistributedEnforcer) UpdatePolicySelf(arg0 func() bool, arg1, arg2
 	return ret0, ret1
 }
 
-// UpdatePolicySelf indicates an expected call of UpdatePolicySelf
+// UpdatePolicySelf indicates an expected call of UpdatePolicySelf.
 func (mr *MockIDistributedEnforcerMockRecorder) UpdatePolicySelf(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePolicySelf", reflect.TypeOf((*MockIDistributedEnforcer)(nil).UpdatePolicySelf), arg0, arg1, arg2, arg3, arg4)

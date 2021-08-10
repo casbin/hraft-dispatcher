@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible
-	github.com/casbin/casbin/v2 v2.24.0
+	github.com/casbin/casbin/v2 v2.35.0
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/go-chi/chi v1.5.1
 	github.com/golang/mock v1.4.4

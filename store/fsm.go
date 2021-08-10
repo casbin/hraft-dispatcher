@@ -153,6 +153,34 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 			)
 		}
 		return err
+	case command.Command_COMMAND_TYPE_UPDATE_FILTERED_POLICIES:
+		var request command.UpdateFilteredPoliciesRequest
+		err := proto.Unmarshal(cmd.Data, &request)
+		if err != nil {
+			f.logger.Error("cannot to unmarshal the request", zap.Error(err), zap.ByteString("request", cmd.Data))
+			return err
+		}
+		var oldRules [][]string
+		for _, rule := range request.OldRules {
+			oldRules = append(oldRules, rule.GetItems())
+		}
+		var newRules [][]string
+		for _, rule := range request.NewRules {
+			newRules = append(newRules, rule.GetItems())
+		}
+
+		err = f.policyOperator.UpdateFilteredPolicies(request.Sec, request.PType, oldRules, newRules)
+		if err != nil {
+			f.logger.Error("apply the update policies request failed", zap.Error(err), zap.String("request", request.String()))
+		} else {
+			f.logger.Info("update policies request applied",
+				zap.String("sec", request.Sec),
+				zap.String("pType", request.PType),
+				zap.Any("oldRules", request.OldRules),
+				zap.Any("newRules", request.NewRules),
+			)
+		}
+		return err
 	case command.Command_COMMAND_TYPE_CLEAR_POLICY:
 		err := f.policyOperator.ClearPolicy()
 		if err != nil {
