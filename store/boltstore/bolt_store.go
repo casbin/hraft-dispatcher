@@ -43,6 +43,7 @@ type BoltStore struct {
 	retain int
 }
 
+// BoltSnapshotSink implements SnapshotSink with bbolt.
 type BoltSnapshotSink struct {
 	boltStore *BoltStore
 
@@ -345,8 +346,8 @@ func (b *BoltStore) getSnapshot(tx *bolt.Tx) []*raft.SnapshotMeta {
 	var snapMeta []*raft.SnapshotMeta
 	curs := tx.Bucket(dbSnapMeta).Cursor()
 	for k, v := curs.First(); k != nil; k, v = curs.Next() {
-		var tempMeta *raft.SnapshotMeta
-		if decodeMsgPack(v, tempMeta) != nil {
+		tempMeta := new(raft.SnapshotMeta)
+		if decodeMsgPack(v, tempMeta) == nil {
 			snapMeta = append(snapMeta, tempMeta)
 		}
 	}
@@ -386,7 +387,7 @@ func (b *BoltStore) Open(id string) (*raft.SnapshotMeta, io.ReadCloser, error) {
 		return nil, nil, fmt.Errorf("[ERR] snapshot: failed to open snapshot metadata. id: %s", id)
 	}
 
-	var snapMeta *raft.SnapshotMeta
+	snapMeta := new(raft.SnapshotMeta)
 	if err := decodeMsgPack(val, snapMeta); err != nil {
 		return nil, nil, err
 	}
