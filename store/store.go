@@ -107,6 +107,9 @@ func (s *Store) Start(enableBootstrap bool) error {
 		s.snapshotStore = snapshots
 		s.stableStore = inMemStore
 	} else {
+		if err := os.MkdirAll(s.dataDir, 0755); err != nil && !os.IsExist(err) {
+			return fmt.Errorf("data directory is not accessible: %v", err)
+		}
 		dbPath := filepath.Join(s.dataDir, raftDBName)
 		boltDB, err := boltstore.NewBoltStore(dbPath, retainSnapshotCount)
 		if err != nil {
