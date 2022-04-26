@@ -200,7 +200,7 @@ func (f *FSM) Apply(log *raft.Log) interface{} {
 // concurrently with any other command. The FSM must discard all previous
 // state.
 // When Raft starts, if the local snapshot exists, call Restore, otherwise
-// read log from logstore and pass it to Apply.
+// read log from boltstore and pass it to Apply.
 func (f *FSM) Restore(rc io.ReadCloser) error {
 	f.logger.Info("restore an FSM from the snapshot")
 	err := f.policyOperator.Restore(rc)

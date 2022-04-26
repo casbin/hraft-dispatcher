@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/casbin/hraft-dispatcher/store/logstore"
+	"github.com/casbin/hraft-dispatcher/store/boltstore"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/pkg/errors"
@@ -46,7 +46,7 @@ type Store struct {
 	logStore               raft.LogStore
 	stableStore            raft.StableStore
 	fms                    raft.FSM
-	boltStore              *logstore.BoltStore
+	boltStore              *boltstore.BoltStore
 
 	enforcer casbin.IDistributedEnforcer
 
@@ -100,26 +100,15 @@ func (s *Store) Start(enableBootstrap bool) error {
 	}
 	s.transport = transport
 
-	var snapshots raft.SnapshotStore
 	if s.inMemory {
-		snapshots = raft.NewInmemSnapshotStore()
-	} else {
-		fileSnapshots, err := raft.NewFileSnapshotStore(s.dataDir, retainSnapshotCount, os.Stderr)
-		if err != nil {
-			s.logger.Error("failed to new file snapshot store", zap.Error(err), zap.String("raftData", s.dataDir))
-			return err
-		}
-		snapshots = fileSnapshots
-	}
-	s.snapshotStore = snapshots
-
-	if s.inMemory {
+		snapshots := raft.NewInmemSnapshotStore()
 		inMemStore := raft.NewInmemStore()
 		s.logStore = inMemStore
+		s.snapshotStore = snapshots
 		s.stableStore = inMemStore
 	} else {
 		dbPath := filepath.Join(s.dataDir, raftDBName)
-		boltDB, err := logstore.NewBoltStore(dbPath)
+		boltDB, err := boltstore.NewBoltStore(dbPath, retainSnapshotCount)
 		if err != nil {
 			s.logger.Error("failed to new bolt store", zap.Error(err), zap.String("path", dbPath))
 			return err
@@ -127,6 +116,7 @@ func (s *Store) Start(enableBootstrap bool) error {
 
 		s.boltStore = boltDB
 		s.logStore = boltDB
+		s.snapshotStore = boltDB
 		s.stableStore = boltDB
 	}
 

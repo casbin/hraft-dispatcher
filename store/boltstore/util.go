@@ -1,4 +1,4 @@
-package logstore
+package boltstore
 
 import (
 	"bytes"

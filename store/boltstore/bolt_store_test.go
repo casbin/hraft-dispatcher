@@ -1,4 +1,4 @@
-package logstore
+package boltstore
 
 import (
 	"bytes"
@@ -12,6 +12,8 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+const retainSnapshotCount = 2
+
 func testBoltStore(t testing.TB) *BoltStore {
 	fh, err := ioutil.TempFile("", "bolt")
 	if err != nil {
@@ -20,7 +22,7 @@ func testBoltStore(t testing.TB) *BoltStore {
 	defer os.RemoveAll(fh.Name())
 
 	// Successfully creates and returns a store
-	store, err := NewBoltStore(fh.Name())
+	store, err := NewBoltStore(fh.Name(), retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -37,6 +39,9 @@ func testRaftLog(idx uint64, data string) *raft.Log {
 
 func TestBoltStore_Implements(t *testing.T) {
 	var store interface{} = &BoltStore{}
+	if _, ok := store.(raft.SnapshotStore); !ok {
+		t.Fatalf("BoltStore does not implement raft.SnapshotStore")
+	}
 	if _, ok := store.(raft.StableStore); !ok {
 		t.Fatalf("BoltStore does not implement raft.StableStore")
 	}
@@ -58,7 +63,7 @@ func TestBoltOptionsTimeout(t *testing.T) {
 			Timeout: time.Second / 10,
 		},
 	}
-	store, err := New(options)
+	store, err := New(options, retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -67,7 +72,7 @@ func TestBoltOptionsTimeout(t *testing.T) {
 	// trying to open it again should timeout
 	doneCh := make(chan error, 1)
 	go func() {
-		_, err := New(options)
+		_, err := New(options, retainSnapshotCount)
 		doneCh <- err
 	}()
 	select {
@@ -86,7 +91,7 @@ func TestBoltOptionsReadOnly(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	defer os.RemoveAll(fh.Name())
-	store, err := NewBoltStore(fh.Name())
+	store, err := NewBoltStore(fh.Name(), retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -108,7 +113,7 @@ func TestBoltOptionsReadOnly(t *testing.T) {
 			ReadOnly: true,
 		},
 	}
-	roStore, err := New(options)
+	roStore, err := New(options, retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -137,7 +142,7 @@ func TestNewBoltStore(t *testing.T) {
 	defer os.RemoveAll(fh.Name())
 
 	// Successfully creates and returns a store
-	store, err := NewBoltStore(fh.Name())
+	store, err := NewBoltStore(fh.Name(), retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -168,6 +173,12 @@ func TestNewBoltStore(t *testing.T) {
 		t.Fatalf("bad: %v", err)
 	}
 	if _, err := tx.CreateBucket([]byte(dbConf)); err != bolt.ErrBucketExists {
+		t.Fatalf("bad: %v", err)
+	}
+	if _, err := tx.CreateBucket([]byte(dbSnapMeta)); err != bolt.ErrBucketExists {
+		t.Fatalf("bad: %v", err)
+	}
+	if _, err := tx.CreateBucket([]byte(dbSnapData)); err != bolt.ErrBucketExists {
 		t.Fatalf("bad: %v", err)
 	}
 }
