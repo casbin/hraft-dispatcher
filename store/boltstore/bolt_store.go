@@ -409,15 +409,17 @@ func (s *BoltSnapshotSink) ID() string {
 }
 
 func (s *BoltSnapshotSink) Cancel() error {
-	s.contents.Reset()
 	return nil
 }
 
 // Write is used to append the content of the snapshot
 func (s *BoltSnapshotSink) Write(b []byte) (int, error) {
 	written, err := s.contents.Write(b)
+	if err != nil {
+		return 0, err
+	}
 	s.meta.Size += int64(written)
-	return written, err
+	return written, nil
 }
 
 // Close is used to indicate a successful end.
