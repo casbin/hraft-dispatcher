@@ -1,11 +1,15 @@
 package store
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/casbin/hraft-dispatcher/store/boltstore"
@@ -47,6 +51,7 @@ type Store struct {
 	stableStore            raft.StableStore
 	fms                    raft.FSM
 	boltStore              *boltstore.BoltStore
+	useBoltSnapshot        bool
 
 	enforcer casbin.IDistributedEnforcer
 
@@ -62,6 +67,7 @@ type Config struct {
 	NetworkTransportConfig *raft.NetworkTransportConfig
 	Enforcer               casbin.IDistributedEnforcer
 	RaftConfig             *raft.Config
+	UseBoltSnapshot        bool
 }
 
 // NewStore return a instance of Store.
@@ -73,6 +79,7 @@ func NewStore(logger *zap.Logger, config *Config) (*Store, error) {
 		networkTransportConfig: config.NetworkTransportConfig,
 		enforcer:               config.Enforcer,
 		raftConfig:             config.RaftConfig,
+		useBoltSnapshot:        config.UseBoltSnapshot,
 	}
 
 	return s, nil
@@ -116,11 +123,25 @@ func (s *Store) Start(enableBootstrap bool) error {
 			s.logger.Error("failed to new bolt store", zap.Error(err), zap.String("path", dbPath))
 			return err
 		}
-
 		s.boltStore = boltDB
 		s.logStore = boltDB
-		s.snapshotStore = boltDB
 		s.stableStore = boltDB
+
+		if s.useBoltSnapshot {
+			// Try to migrate previous file snapshots to bbolt if necessary
+			if err := s.checkAndMigrateFileSnapshot(); err != nil {
+				s.logger.Error("failed to migrate previous file snapshots to bbolt")
+				return err
+			}
+			s.snapshotStore = boltDB
+		} else {
+			fileSnapshots, err := raft.NewFileSnapshotStore(s.dataDir, retainSnapshotCount, os.Stderr)
+			if err != nil {
+				s.logger.Error("failed to new file snapshot store", zap.Error(err), zap.String("raftData", s.dataDir))
+				return err
+			}
+			s.snapshotStore = fileSnapshots
+		}
 	}
 
 	fsm, err := NewFSM(s.logger, s.dataDir, s.enforcer)
@@ -228,6 +249,74 @@ func (s *Store) ID() string {
 // DataDir returns the data directory of the current node.
 func (s *Store) DataDir() string {
 	return s.dataDir
+}
+
+func (s *Store) checkAndMigrateFileSnapshot() error {
+	const (
+		snapPath      = "snapshots"
+		metaFilePath  = "meta.json"
+		stateFilePath = "state.bin"
+		tmpSuffix     = ".tmp"
+	)
+
+	// Get snapshot directory
+	snapDir := filepath.Join(s.dataDir, snapPath)
+	if stat, err := os.Stat(snapDir); err == nil && stat.IsDir() {
+		snapshots, err := ioutil.ReadDir(snapDir)
+		if err != nil {
+			return err
+		}
+
+		for _, snap := range snapshots {
+			// Ignore any files
+			if !snap.IsDir() {
+				continue
+			}
+
+			// Ignore any temporary snapshots
+			dirName := snap.Name()
+			if strings.HasSuffix(dirName, tmpSuffix) {
+				continue
+			}
+
+			metaPath := filepath.Join(snapDir, dirName, metaFilePath)
+			fh, err := os.Open(metaPath)
+			if err != nil {
+				continue
+			}
+
+			// Read the metadata of the snapshot
+			buffered := bufio.NewReader(fh)
+			meta := &raft.SnapshotMeta{}
+			dec := json.NewDecoder(buffered)
+			if err := dec.Decode(meta); err != nil {
+				fh.Close()
+				continue
+			}
+			fh.Close()
+
+			// Make sure we can understand this version.
+			if meta.Version < raft.SnapshotVersionMin || meta.Version > raft.SnapshotVersionMax {
+				continue
+			}
+
+			// Read the contents of the snapshot
+			statePath := filepath.Join(snapDir, dirName, stateFilePath)
+			state, err := ioutil.ReadFile(statePath)
+			if err != nil {
+				continue
+			}
+
+			// Put FileSnapshot into bbolt
+			if err := s.boltStore.PutSnapshot(*meta, state); err != nil {
+				continue
+			}
+		}
+
+		os.RemoveAll(snapDir)
+	}
+
+	return nil
 }
 
 // applyProtoMessage applies a proto message.

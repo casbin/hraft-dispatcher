@@ -5,6 +5,8 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -134,7 +136,7 @@ func TestStore_SingleNode(t *testing.T) {
 	raftID := "node-leader"
 	raftAddress := GetLocalIP() + ":6790"
 
-	store, err := newStore(enforcer, raftID, raftAddress, true)
+	store, err := newStore("", enforcer, raftID, raftAddress, true, false)
 	assert.NoError(t, err)
 	defer store.Stop()
 	defer os.RemoveAll(store.DataDir())
@@ -267,14 +269,14 @@ func TestStore_MultipleNode(t *testing.T) {
 	leaderID := "node-leader"
 	followerID := "node-follower"
 
-	leaderStore, err := newStore(leaderEnforcer, leaderID, leaderAddress, true)
+	leaderStore, err := newStore("", leaderEnforcer, leaderID, leaderAddress, true, false)
 	assert.NoError(t, err)
 	defer leaderStore.Stop()
 
 	err = leaderStore.WaitLeader()
 	assert.NoError(t, err)
 
-	followerStore, err := newStore(followerEnforcer, followerID, followerAddress, false)
+	followerStore, err := newStore("", followerEnforcer, followerID, followerAddress, false, false)
 	assert.NoError(t, err)
 	defer followerStore.Stop()
 
@@ -423,10 +425,84 @@ func TestStore_MultipleNode(t *testing.T) {
 	})
 }
 
-func newStore(enforcer casbin.IDistributedEnforcer, id string, address string, enableBootstrap bool) (*Store, error) {
+func TestStore_MigrateFileSnapshot(t *testing.T) {
 	dir, err := ioutil.TempDir("", "casbin-hraft-")
-	if err != nil {
-		return nil, err
+	assert.NoError(t, err)
+
+	fileSnapshot, err := raft.NewFileSnapshotStore(dir, retainSnapshotCount, os.Stderr)
+	assert.NoError(t, err)
+	_, trans := raft.NewInmemTransport(raft.NewInmemAddr())
+
+	ctl := gomock.NewController(t)
+	defer ctl.Finish()
+
+	enforcer := mocks.NewMockIDistributedEnforcer(ctl)
+	p, err := NewPolicyOperator(zap.NewExample(), dir, enforcer)
+	assert.NoError(t, err)
+
+	enforcer.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}).Return([][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}}, nil)
+	err = p.AddPolicies("p", "p", [][]string{{"role:admin", "/", "*"}, {"role:user", "/", "GET"}})
+	assert.NoError(t, err)
+	b, err := p.Backup()
+	assert.NoError(t, err)
+	size := len(b)
+	p.db.Close()
+
+	for i := 0; i < 3; i++ {
+		var sink raft.SnapshotSink
+		sink, err = fileSnapshot.Create(1, uint64(i), 3, raft.Configuration{}, 0, trans)
+		assert.NoError(t, err)
+		_, err := sink.Write(b)
+		assert.NoError(t, err)
+		err = sink.Close()
+		assert.NoError(t, err)
+	}
+
+	snaps, err := fileSnapshot.List()
+	assert.NoError(t, err)
+	assert.Equal(t, retainSnapshotCount, len(snaps))
+
+	raftID := "node-leader"
+	raftAddress := GetLocalIP() + ":6790"
+
+	enforcer.EXPECT().ClearPolicySelf(nil)
+	enforcer.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:admin", "/", "*"}})
+	enforcer.EXPECT().AddPoliciesSelf(nil, "p", "p", [][]string{{"role:user", "/", "GET"}})
+
+	// Create store with bbolt snapshots
+	store, err := newStore(dir, enforcer, raftID, raftAddress, true, true)
+	assert.NoError(t, err)
+	defer store.Stop()
+	defer os.RemoveAll(store.DataDir())
+
+	// Make sure file snapshot directory does not exist
+	const snapPath = "snapshots"
+	snapDir := filepath.Join(dir, snapPath)
+	_, err = os.Stat(snapDir)
+	assert.Error(t, err)
+
+	// Make sure the data is consistent
+	snaps, err = store.snapshotStore.List()
+	assert.NoError(t, err)
+	assert.Equal(t, retainSnapshotCount, len(snaps))
+
+	for k, v := range snaps {
+		assert.Equal(t, uint64(2-k), v.Index)
+		assert.Equal(t, uint64(3), v.Term)
+		assert.Equal(t, true, reflect.DeepEqual(v.Configuration, raft.Configuration{}))
+		assert.Equal(t, uint64(0), v.ConfigurationIndex)
+		assert.Equal(t, int64(size), v.Size)
+	}
+}
+
+func newStore(dataDir string, enforcer casbin.IDistributedEnforcer, id string, address string, enableBootstrap, useBoltSnapshot bool) (*Store, error) {
+	dir := dataDir
+	if dir == "" {
+		var err error
+		dir, err = ioutil.TempDir("", "casbin-hraft-")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	tlsConfig, err := GetTLSConfig()
@@ -453,7 +529,8 @@ func newStore(enforcer casbin.IDistributedEnforcer, id string, address string, e
 			MaxPool: 5,
 			Timeout: 10 * time.Second,
 		},
-		Enforcer: enforcer,
+		Enforcer:        enforcer,
+		UseBoltSnapshot: useBoltSnapshot,
 	})
 	if err != nil {
 		return nil, err

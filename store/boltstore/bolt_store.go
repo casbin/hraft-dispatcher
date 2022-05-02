@@ -424,39 +424,7 @@ func (s *BoltSnapshotSink) Write(b []byte) (int, error) {
 
 // Close is used to indicate a successful end.
 func (s *BoltSnapshotSink) Close() error {
-	tx, err := s.boltStore.conn.Begin(true)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	metaBucket := tx.Bucket(dbSnapMeta)
-	buf, err := encodeMsgPack(s.meta)
-	if err != nil {
-		return err
-	}
-	if err = metaBucket.Put([]byte(s.meta.ID), buf.Bytes()); err != nil {
-		return err
-	}
-
-	dataBucket := tx.Bucket(dbSnapData)
-	if err = dataBucket.Put([]byte(s.meta.ID), s.contents.Bytes()); err != nil {
-		return err
-	}
-
-	// reap any snapshots beyond the retain count.
-	snapMeta := s.boltStore.getSnapshot(tx)
-	for i := s.boltStore.retain; i < len(snapMeta); i++ {
-		if err := metaBucket.Delete([]byte(snapMeta[i].ID)); err != nil {
-			return err
-		}
-
-		if err := dataBucket.Delete([]byte(snapMeta[i].ID)); err != nil {
-			return err
-		}
-	}
-
-	return tx.Commit()
+	return s.boltStore.PutSnapshot(s.meta, s.contents.Bytes())
 }
 
 // Implement the sort interface for []*SnapshotMeta.
@@ -476,6 +444,42 @@ func (s snapMetaSlice) Less(i, j int) bool {
 
 func (s snapMetaSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
+}
+
+func (b *BoltStore) PutSnapshot(meta raft.SnapshotMeta, state []byte) error {
+	tx, err := b.conn.Begin(true)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	metaBucket := tx.Bucket(dbSnapMeta)
+	buf, err := encodeMsgPack(meta)
+	if err != nil {
+		return err
+	}
+	if err = metaBucket.Put([]byte(meta.ID), buf.Bytes()); err != nil {
+		return err
+	}
+
+	dataBucket := tx.Bucket(dbSnapData)
+	if err = dataBucket.Put([]byte(meta.ID), state); err != nil {
+		return err
+	}
+
+	// reap any snapshots beyond the retain count.
+	snapMeta := b.getSnapshot(tx)
+	for i := b.retain; i < len(snapMeta); i++ {
+		if err := metaBucket.Delete([]byte(snapMeta[i].ID)); err != nil {
+			return err
+		}
+
+		if err := dataBucket.Delete([]byte(snapMeta[i].ID)); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 // Sync performs an fsync on the database file handle. This is not necessary

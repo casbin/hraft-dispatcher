@@ -29,4 +29,6 @@ type Config struct {
 	TLSConfig *tls.Config
 	// RaftConfig provides any necessary configuration for the Raft server.
 	RaftConfig *raft.Config
+	// When UseBoltSnapshot is set, use bbolt as snapshot store instead of FileSnapshot
+	UseBoltSnapshot bool
 }
