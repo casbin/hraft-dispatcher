@@ -51,7 +51,7 @@ tls.Config{
 
 ## Architecture
 
-hraft-dispatcher is a [dispatcher](https://casbin.org/docs/en/dispatchers) plug-in based on [hashicorp/raft](https://github.com/hashicorp/raft) implementation.
+hraft-dispatcher is a [dispatcher](https://casbin.org/docs/dispatchers/) plug-in based on [hashicorp/raft](https://github.com/hashicorp/raft) implementation.
 
 hraft-dispatcher includes an HTTP service, and a Raft service:
 
