@@ -1,7 +1,8 @@
-package logstore
+package boltstore
 
 import (
 	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -12,6 +13,11 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+const (
+	retainSnapshotCount = 2
+	SnapshotVersionMax = 1
+)
+
 func testBoltStore(t testing.TB) *BoltStore {
 	fh, err := ioutil.TempFile("", "bolt")
 	if err != nil {
@@ -20,7 +26,7 @@ func testBoltStore(t testing.TB) *BoltStore {
 	defer os.RemoveAll(fh.Name())
 
 	// Successfully creates and returns a store
-	store, err := NewBoltStore(fh.Name())
+	store, err := NewBoltStore(fh.Name(), retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -37,11 +43,19 @@ func testRaftLog(idx uint64, data string) *raft.Log {
 
 func TestBoltStore_Implements(t *testing.T) {
 	var store interface{} = &BoltStore{}
+	var sink interface{} = &BoltSnapshotSink{}
 	if _, ok := store.(raft.StableStore); !ok {
 		t.Fatalf("BoltStore does not implement raft.StableStore")
 	}
 	if _, ok := store.(raft.LogStore); !ok {
 		t.Fatalf("BoltStore does not implement raft.LogStore")
+	}
+
+	if _, ok := store.(raft.SnapshotStore); !ok {
+		t.Fatalf("BoltStore does not implement raft.SnapshotStore")
+	}
+	if _, ok := sink.(raft.SnapshotSink); !ok {
+		t.Fatalf("BoltSnapshotSink does not implement raft.SnapshotSink")
 	}
 }
 
@@ -58,7 +72,7 @@ func TestBoltOptionsTimeout(t *testing.T) {
 			Timeout: time.Second / 10,
 		},
 	}
-	store, err := New(options)
+	store, err := New(options, retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %v", err)
 	}
@@ -67,7 +81,7 @@ func TestBoltOptionsTimeout(t *testing.T) {
 	// trying to open it again should timeout
 	doneCh := make(chan error, 1)
 	go func() {
-		_, err := New(options)
+		_, err := New(options, retainSnapshotCount)
 		doneCh <- err
 	}()
 	select {
@@ -86,7 +100,7 @@ func TestBoltOptionsReadOnly(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	defer os.RemoveAll(fh.Name())
-	store, err := NewBoltStore(fh.Name())
+	store, err := NewBoltStore(fh.Name(), retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -108,7 +122,7 @@ func TestBoltOptionsReadOnly(t *testing.T) {
 			ReadOnly: true,
 		},
 	}
-	roStore, err := New(options)
+	roStore, err := New(options, retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -137,7 +151,7 @@ func TestNewBoltStore(t *testing.T) {
 	defer os.RemoveAll(fh.Name())
 
 	// Successfully creates and returns a store
-	store, err := NewBoltStore(fh.Name())
+	store, err := NewBoltStore(fh.Name(), retainSnapshotCount)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -168,6 +182,12 @@ func TestNewBoltStore(t *testing.T) {
 		t.Fatalf("bad: %v", err)
 	}
 	if _, err := tx.CreateBucket([]byte(dbConf)); err != bolt.ErrBucketExists {
+		t.Fatalf("bad: %v", err)
+	}
+	if _, err := tx.CreateBucket([]byte(dbSnapMeta)); err != bolt.ErrBucketExists {
+		t.Fatalf("bad: %v", err)
+	}
+	if _, err := tx.CreateBucket([]byte(dbSnapData)); err != bolt.ErrBucketExists {
 		t.Fatalf("bad: %v", err)
 	}
 }
@@ -412,5 +432,214 @@ func TestBoltStore_SetUint64_GetUint64(t *testing.T) {
 	}
 	if val != v {
 		t.Fatalf("bad: %v", val)
+	}
+}
+
+func TestBoltStore_Snapshot_Create(t *testing.T) {
+	store := testBoltStore(t)
+	defer store.Close()
+	defer os.RemoveAll(store.path)
+
+	// Check no snapshots
+	snaps, err := store.List()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if len(snaps) != 0 {
+		t.Fatalf("did not expect any snapshots: %v", snaps)
+	}
+
+	// Create a new sink
+	var configuration raft.Configuration
+	configuration.Servers = append(configuration.Servers, raft.Server{
+		Suffrage: raft.Voter,
+		ID:       raft.ServerID("my id"),
+		Address:  raft.ServerAddress("over here"),
+	})
+	_, trans := raft.NewInmemTransport(raft.NewInmemAddr())
+	sink, err := store.Create(SnapshotVersionMax, 10, 3, configuration, 2, trans)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// The sink is not done, should not be in a list!
+	snaps, err = store.List()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if len(snaps) != 0 {
+		t.Fatalf("did not expect any snapshots: %v", snaps)
+	}
+
+	// Write to the sink
+	_, err = sink.Write([]byte("first\n"))
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	_, err = sink.Write([]byte("second\n"))
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Done!
+	err = sink.Close()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Should have a snapshot!
+	snaps, err = store.List()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if len(snaps) != 1 {
+		t.Fatalf("expect a snapshots: %v", snaps)
+	}
+
+	// Check the latest
+	latest := snaps[0]
+	if latest.Index != 10 {
+		t.Fatalf("bad snapshot: %v", *latest)
+	}
+	if latest.Term != 3 {
+		t.Fatalf("bad snapshot: %v", *latest)
+	}
+	if !reflect.DeepEqual(latest.Configuration, configuration) {
+		t.Fatalf("bad snapshot: %v", *latest)
+	}
+	if latest.ConfigurationIndex != 2 {
+		t.Fatalf("bad snapshot: %v", *latest)
+	}
+	if latest.Size != 13 {
+		t.Fatalf("bad snapshot: %v", *latest)
+	}
+
+	// Read the snapshot
+	_, r, err := store.Open(latest.ID)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Read out everything
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if err := r.Close(); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Ensure a match
+	if bytes.Compare(buf.Bytes(), []byte("first\nsecond\n")) != 0 {
+		t.Fatalf("content mismatch")
+	}
+}
+
+func TestBoltSore_Snapshot_Cancel(t *testing.T) {
+	store := testBoltStore(t)
+	defer store.Close()
+	defer os.RemoveAll(store.path)
+
+	_, trans := raft.NewInmemTransport(raft.NewInmemAddr())
+	sink, err := store.Create(SnapshotVersionMax, 10, 3, raft.Configuration{}, 0, trans)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Cancel the snapshot! Should delete
+	err = sink.Cancel()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// The sink is canceled, should not be in a list!
+	snaps, err := store.List()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if len(snaps) != 0 {
+		t.Fatalf("did not expect any snapshots: %v", snaps)
+	}
+}
+
+func TestBoltStore_Snapshot_Retention(t *testing.T) {
+	var err error
+
+	store := testBoltStore(t)
+	defer store.Close()
+	defer os.RemoveAll(store.path)
+
+	_, trans := raft.NewInmemTransport(raft.NewInmemAddr())
+	for i := 10; i < 15; i++ {
+		var sink raft.SnapshotSink
+		sink, err = store.Create(SnapshotVersionMax, uint64(i), 3, raft.Configuration{}, 0, trans)
+		if err != nil {
+			t.Fatalf("err: %v", err)
+		}
+		err = sink.Close()
+		if err != nil {
+			t.Fatalf("err: %v", err)
+		}
+	}
+
+	// Should only have 2 listed!
+	var snaps []*raft.SnapshotMeta
+	snaps, err = store.List()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if len(snaps) != 2 {
+		t.Fatalf("expect 2 snapshots: %v", snaps)
+	}
+
+	// Check they are the latest
+	if snaps[0].Index != 14 {
+		t.Fatalf("bad snap: %#v", *snaps[0])
+	}
+	if snaps[1].Index != 13 {
+		t.Fatalf("bad snap: %#v", *snaps[1])
+	}
+}
+
+func TestBoltStore_Snapshot_Ordering(t *testing.T) {
+	store := testBoltStore(t)
+	defer store.Close()
+	defer os.RemoveAll(store.path)
+
+	// Create a new sink
+	_, trans := raft.NewInmemTransport(raft.NewInmemAddr())
+	sink, err := store.Create(SnapshotVersionMax, 130350, 5, raft.Configuration{}, 0, trans)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	err = sink.Close()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	sink, err = store.Create(SnapshotVersionMax, 204917, 36, raft.Configuration{}, 0, trans)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	err = sink.Close()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Should only have 2 listed!
+	snaps, err := store.List()
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if len(snaps) != 2 {
+		t.Fatalf("expect 2 snapshots: %v", snaps)
+	}
+
+	// Check they are ordered
+	if snaps[0].Term != 36 {
+		t.Fatalf("bad snap: %#v", *snaps[0])
+	}
+	if snaps[1].Term != 5 {
+		t.Fatalf("bad snap: %#v", *snaps[1])
 	}
 }

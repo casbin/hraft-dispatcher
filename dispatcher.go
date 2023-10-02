@@ -103,8 +103,9 @@ func NewHRaftDispatcherWithLogger(config *Config, logger *zap.Logger) (*HRaftDis
 			MaxPool: 5,
 			Logger:  nil,
 		},
-		Enforcer:   config.Enforcer,
-		RaftConfig: config.RaftConfig,
+		Enforcer:        config.Enforcer,
+		RaftConfig:      config.RaftConfig,
+		UseBoltSnapshot: config.UseBoltSnapshot,
 	}
 	s, err := store.NewStore(logger, storeConfig)
 	if err != nil {
